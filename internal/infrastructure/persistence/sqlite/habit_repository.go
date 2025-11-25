@@ -206,3 +206,38 @@ func (r *HabitRepository) scanHabits(rows *sql.Rows) ([]*entities.Habit, error) 
 
 	return habits, nil
 }
+
+func (r *HabitRepository) FindByUserID(ctx context.Context, userID string) ([]*entities.Habit, error) {
+	query := `
+		SELECT id, user_id, name, description, type, frequency,
+			   specific_days, specific_dates, carry_over, target_value,
+			   created_at, archived_at
+		FROM habits
+		WHERE user_id = ?
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find habits: %w", err)
+	}
+	defer rows.Close()
+
+	return r.scanHabits(rows)
+}
+
+func (r *HabitRepository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM habits WHERE id = ?`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete habit: %w", err)
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return errors.ErrNotFound
+	}
+
+	return nil
+}

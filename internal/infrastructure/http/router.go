@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func NewRouter(corsOrigins string) *chi.Mux {
+func NewRouter(corsOrigins string, habitHandlers *HabitHandlers) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -23,6 +23,12 @@ func NewRouter(corsOrigins string) *chi.Mux {
 	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
+	})
+
+	r.Route("/api/v1/habits", func(r chi.Router) {
+		r.Post("/", habitHandlers.CreateHabit)
+		r.Get("/today", habitHandlers.GetTodaysHabits)
+		r.Post("/{id}/mark", habitHandlers.MarkHabit)
 	})
 
 	return r

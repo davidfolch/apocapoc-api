@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"habit-tracker-api/internal/application/commands"
+	"habit-tracker-api/internal/application/queries"
 	"habit-tracker-api/internal/infrastructure/config"
 	httpInfra "habit-tracker-api/internal/infrastructure/http"
 	"habit-tracker-api/internal/infrastructure/persistence/sqlite"
@@ -22,7 +24,16 @@ func main() {
 	}
 	defer db.Close()
 
-	router := httpInfra.NewRouter(cfg.CORSOrigins)
+	habitRepo := sqlite.NewHabitRepository(db.Conn())
+	entryRepo := sqlite.NewHabitEntryRepository(db.Conn())
+
+	createHandler := commands.NewCreateHabitHandler(habitRepo)
+	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
+	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
+
+	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, markHandler)
+
+	router := httpInfra.NewRouter(cfg.CORSOrigins, habitHandlers)
 
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 	log.Printf("Server starting on %s", addr)

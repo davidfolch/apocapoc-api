@@ -134,3 +134,100 @@ func (r *HabitEntryRepository) scanEntries(rows *sql.Rows) ([]*entities.HabitEnt
 
 	return entries, nil
 }
+
+func (r *HabitEntryRepository) FindByID(ctx context.Context, id string) (*entities.HabitEntry, error) {
+	query := `
+		SELECT id, habit_id, scheduled_date, completed_at, value, deleted_at
+		FROM habit_entries
+		WHERE id = ?
+	`
+
+	var (
+		entry         entities.HabitEntry
+		scheduledDate string
+		deletedAt     sql.NullTime
+	)
+
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&entry.ID,
+		&entry.HabitID,
+		&scheduledDate,
+		&entry.CompletedAt,
+		&entry.Value,
+		&deletedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, errors.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to find entry: %w", err)
+	}
+
+	parsedDate, err := time.Parse("2006-01-02", scheduledDate)
+	if err != nil {
+		parsedDate, err = time.Parse(time.RFC3339, scheduledDate)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse scheduled_date: %w", err)
+		}
+	}
+	entry.ScheduledDate = parsedDate
+
+	if deletedAt.Valid {
+		entry.DeletedAt = &deletedAt.Time
+	}
+
+	return &entry, nil
+}
+
+func (r *HabitEntryRepository) FindByHabitID(ctx context.Context, habitID string) ([]*entities.HabitEntry, error) {
+	query := `
+		SELECT id, habit_id, scheduled_date, completed_at, value, deleted_at
+		FROM habit_entries
+		WHERE habit_id = ?
+		ORDER BY scheduled_date DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, habitID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find entries: %w", err)
+	}
+	defer rows.Close()
+
+	return r.scanEntries(rows)
+}
+
+func (r *HabitEntryRepository) FindPendingByHabitID(ctx context.Context, habitID string, beforeDate time.Time) ([]*entities.HabitEntry, error) {
+	query := `
+		SELECT id, habit_id, scheduled_date, completed_at, value, deleted_at
+		FROM habit_entries
+		WHERE habit_id = ?
+		  AND scheduled_date < ?
+		  AND deleted_at IS NULL
+		ORDER BY scheduled_date DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, habitID, beforeDate.Format("2006-01-02"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find pending entries: %w", err)
+	}
+	defer rows.Close()
+
+	return r.scanEntries(rows)
+}
+
+func (r *HabitEntryRepository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM habit_entries WHERE id = ?`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete entry: %w", err)
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return errors.ErrNotFound
+	}
+
+	return nil
+}
