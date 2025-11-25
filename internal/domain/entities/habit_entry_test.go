@@ -55,7 +55,7 @@ func TestHabitEntry_SoftDelete(t *testing.T) {
 		t.Error("New entry should not be deleted")
 	}
 
-	entry.SoftDelete()
+	entry.Delete()
 
 	if entry.DeletedAt == nil {
 		t.Error("Entry should be deleted after calling SoftDelete()")

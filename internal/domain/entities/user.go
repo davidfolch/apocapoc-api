@@ -13,6 +13,9 @@ type User struct {
 
 func NewUser(email, passwordHash, timezone string) *User {
 	now := time.Now()
+	if timezone == "" {
+		timezone = "UTC"
+	}
 	return &User{
 		Email:        email,
 		PasswordHash: passwordHash,
