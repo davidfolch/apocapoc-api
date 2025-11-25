@@ -1,0 +1,9 @@
+.env
+data/
+*.db
+*.db-shm
+*.db-wal
+habit-tracker-api
+dist/
+bin/
+.internal-notes/
