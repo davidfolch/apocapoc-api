@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"habit-tracker-api/internal/domain/value_objects"
+	"apocapoc-api/internal/domain/value_objects"
 )
 
 func TestNewHabit(t *testing.T) {

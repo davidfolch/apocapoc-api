@@ -1,4 +1,4 @@
-module habit-tracker-api
+module apocapoc-api
 
 go 1.24.0
 

@@ -1,4 +1,4 @@
-# Habit Tracker API
+# Apocapoc
 
 Self-hosted habit tracking service with a clean, hexagonal architecture.
 
@@ -17,7 +17,7 @@ Self-hosted habit tracking service with a clean, hexagonal architecture.
 
 1. Download the latest release
 2. Copy `.env.example` to `.env` and configure
-3. Run: `./habit-tracker-api`
+3. Run: `./apocapoc-api`
 
 The API will be available at `http://localhost:8080`
 

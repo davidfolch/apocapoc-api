@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"habit-tracker-api/internal/domain/entities"
-	"habit-tracker-api/internal/shared/errors"
+	"apocapoc-api/internal/domain/entities"
+	"apocapoc-api/internal/shared/errors"
 )
 
 type mockHabitRepo struct {

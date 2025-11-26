@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"habit-tracker-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/infrastructure/auth"
 )
 
 type contextKey string

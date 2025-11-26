@@ -3,7 +3,7 @@ package entities
 import (
 	"time"
 
-	"habit-tracker-api/internal/domain/value_objects"
+	"apocapoc-api/internal/domain/value_objects"
 )
 
 type Habit struct {

@@ -3,10 +3,10 @@ package commands
 import (
 	"context"
 
-	"habit-tracker-api/internal/domain/entities"
-	"habit-tracker-api/internal/domain/repositories"
-	"habit-tracker-api/internal/domain/value_objects"
-	"habit-tracker-api/internal/shared/errors"
+	"apocapoc-api/internal/domain/entities"
+	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/domain/value_objects"
+	"apocapoc-api/internal/shared/errors"
 )
 
 type CreateHabitCommand struct {

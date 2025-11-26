@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"habit-tracker-api/internal/domain/entities"
-	"habit-tracker-api/internal/shared/errors"
+	"apocapoc-api/internal/domain/entities"
+	"apocapoc-api/internal/shared/errors"
 
 	"github.com/google/uuid"
 )

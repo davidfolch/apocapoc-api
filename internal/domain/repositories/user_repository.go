@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"habit-tracker-api/internal/domain/entities"
+	"apocapoc-api/internal/domain/entities"
 )
 
 type UserRepository interface {

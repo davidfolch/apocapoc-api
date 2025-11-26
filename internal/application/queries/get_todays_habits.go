@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"habit-tracker-api/internal/domain/repositories"
-	"habit-tracker-api/internal/shared/utils"
+	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/shared/utils"
 )
 
 type TodaysHabitDTO struct {

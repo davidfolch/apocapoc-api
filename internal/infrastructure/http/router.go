@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	"habit-tracker-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/infrastructure/auth"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

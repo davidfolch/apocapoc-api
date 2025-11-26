@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"habit-tracker-api/internal/domain/entities"
-	"habit-tracker-api/internal/domain/value_objects"
-	"habit-tracker-api/internal/shared/errors"
+	"apocapoc-api/internal/domain/entities"
+	"apocapoc-api/internal/domain/value_objects"
+	"apocapoc-api/internal/shared/errors"
 )
 
 type mockEntryRepo struct {

@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"habit-tracker-api/internal/application/commands"
-	"habit-tracker-api/internal/application/queries"
-	"habit-tracker-api/internal/infrastructure/auth"
-	"habit-tracker-api/internal/shared/errors"
+	"apocapoc-api/internal/application/commands"
+	"apocapoc-api/internal/application/queries"
+	"apocapoc-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/shared/errors"
 )
 
 type AuthHandlers struct {

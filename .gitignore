@@ -3,7 +3,7 @@ data/
 *.db
 *.db-shm
 *.db-wal
-habit-tracker-api
+apocapoc-api
 dist/
 bin/
 .internal-notes/

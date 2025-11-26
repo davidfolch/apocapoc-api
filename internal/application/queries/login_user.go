@@ -3,8 +3,8 @@ package queries
 import (
 	"context"
 
-	"habit-tracker-api/internal/domain/repositories"
-	"habit-tracker-api/internal/shared/errors"
+	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/shared/errors"
 
 	"golang.org/x/crypto/bcrypt"
 )

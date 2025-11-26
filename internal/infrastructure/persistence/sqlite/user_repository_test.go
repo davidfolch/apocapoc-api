@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"habit-tracker-api/internal/domain/entities"
-	"habit-tracker-api/internal/shared/errors"
+	"apocapoc-api/internal/domain/entities"
+	"apocapoc-api/internal/shared/errors"
 
 	_ "github.com/mattn/go-sqlite3"
 )

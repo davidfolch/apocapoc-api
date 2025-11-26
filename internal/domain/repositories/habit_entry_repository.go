@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"habit-tracker-api/internal/domain/entities"
+	"apocapoc-api/internal/domain/entities"
 )
 
 type HabitEntryRepository interface {

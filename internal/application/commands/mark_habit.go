@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"habit-tracker-api/internal/domain/entities"
-	"habit-tracker-api/internal/domain/repositories"
+	"apocapoc-api/internal/domain/entities"
+	"apocapoc-api/internal/domain/repositories"
 )
 
 type MarkHabitCommand struct {

@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"habit-tracker-api/internal/application/commands"
-	"habit-tracker-api/internal/application/queries"
-	"habit-tracker-api/internal/infrastructure/auth"
-	"habit-tracker-api/internal/infrastructure/config"
-	httpInfra "habit-tracker-api/internal/infrastructure/http"
-	"habit-tracker-api/internal/infrastructure/persistence/sqlite"
+	"apocapoc-api/internal/application/commands"
+	"apocapoc-api/internal/application/queries"
+	"apocapoc-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/infrastructure/config"
+	httpInfra "apocapoc-api/internal/infrastructure/http"
+	"apocapoc-api/internal/infrastructure/persistence/sqlite"
 )
 
 func main() {
