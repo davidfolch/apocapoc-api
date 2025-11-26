@@ -1,5 +1,6 @@
 services:
   api:
+    container_name: apocapoc-api-dev
     build: .
     ports:
       - "8080:8080"
