@@ -9,7 +9,7 @@ Self-hosted habit tracking service with a clean, hexagonal architecture.
 - **Carry-over support**: Choose if incomplete habits persist or expire
 - **Full history tracking**: Complete audit trail of all interactions
 - **Charts & Analytics**: Heatmaps, line charts, and statistics
-- **Self-hosted first**: Easy deployment with SQLite or PostgreSQL
+- **Self-hosted first**: Easy deployment with SQLite
 
 ## Quick Start
 
@@ -24,7 +24,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_TYPE=sqlite
       - DB_PATH=/data/apocapoc.db
       - JWT_SECRET=YOUR_SECRET_HERE
       - JWT_EXPIRY=24h
@@ -69,7 +68,7 @@ The API will be available at `http://localhost:8080`
 ### Prerequisites
 
 - Go 1.23+
-- SQLite (or PostgreSQL)
+- SQLite
 
 ### Running locally
 

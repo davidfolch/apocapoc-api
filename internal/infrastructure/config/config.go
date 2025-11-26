@@ -8,7 +8,6 @@ import (
 )
 
 type Config struct {
-	DBType             string
 	DBPath             string
 	Port               string
 	Host               string
@@ -23,7 +22,6 @@ func Load() (*Config, error) {
 	godotenv.Load()
 
 	cfg := &Config{
-		DBType:             os.Getenv("DB_TYPE"),
 		DBPath:             os.Getenv("DB_PATH"),
 		Port:               getEnvOrDefault("PORT", "8080"),
 		Host:               getEnvOrDefault("HOST", "0.0.0.0"),
@@ -34,9 +32,6 @@ func Load() (*Config, error) {
 		DefaultTimezone:    os.Getenv("DEFAULT_TIMEZONE"),
 	}
 
-	if cfg.DBType == "" {
-		return nil, fmt.Errorf("DB_TYPE is required")
-	}
 	if cfg.DBPath == "" {
 		return nil, fmt.Errorf("DB_PATH is required")
 	}
