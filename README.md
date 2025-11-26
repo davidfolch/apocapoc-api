@@ -13,6 +13,49 @@ Self-hosted habit tracking service with a clean, hexagonal architecture.
 
 ## Quick Start
 
+### Using Docker Compose (Recommended)
+
+1. Create a `docker-compose.yml` file:
+
+```yaml
+services:
+  api:
+    image: ghcr.io/davidfolch/apocapoc-api:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_TYPE=sqlite
+      - DB_PATH=/data/apocapoc.db
+      - JWT_SECRET=YOUR_SECRET_HERE
+      - JWT_EXPIRY=24h
+      - REFRESH_TOKEN_EXPIRY=168h
+      - CORS_ORIGINS=http://localhost:3000
+      - DEFAULT_TIMEZONE=UTC
+    volumes:
+      - habit-data:/data
+    restart: unless-stopped
+
+volumes:
+  habit-data:
+```
+
+2. **Important**: Replace `YOUR_SECRET_HERE` with a secure random string for `JWT_SECRET`
+
+3. Start the service:
+
+```bash
+docker-compose up -d
+```
+
+The API will be available at `http://localhost:8080`
+
+**Configuration options:**
+- `JWT_SECRET`: **Required**. Use a long random string
+- `JWT_EXPIRY`: Token expiration (e.g., `24h`, `48h`)
+- `REFRESH_TOKEN_EXPIRY`: Refresh token expiration (e.g., `168h` = 7 days)
+- `CORS_ORIGINS`: Comma-separated list of allowed origins
+- `DEFAULT_TIMEZONE`: Timezone for date calculations (e.g., `UTC`, `Europe/Madrid`)
+
 ### Using the binary
 
 1. Download the latest release

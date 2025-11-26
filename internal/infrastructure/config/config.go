@@ -25,8 +25,8 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		DBType:             os.Getenv("DB_TYPE"),
 		DBPath:             os.Getenv("DB_PATH"),
-		Port:               os.Getenv("PORT"),
-		Host:               os.Getenv("HOST"),
+		Port:               getEnvOrDefault("PORT", "8080"),
+		Host:               getEnvOrDefault("HOST", "0.0.0.0"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		JWTExpiry:          os.Getenv("JWT_EXPIRY"),
 		RefreshTokenExpiry: os.Getenv("REFRESH_TOKEN_EXPIRY"),
@@ -39,12 +39,6 @@ func Load() (*Config, error) {
 	}
 	if cfg.DBPath == "" {
 		return nil, fmt.Errorf("DB_PATH is required")
-	}
-	if cfg.Port == "" {
-		return nil, fmt.Errorf("PORT is required")
-	}
-	if cfg.Host == "" {
-		return nil, fmt.Errorf("HOST is required")
 	}
 	if cfg.JWTSecret == "" {
 		return nil, fmt.Errorf("JWT_SECRET is required")
@@ -63,4 +57,11 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
