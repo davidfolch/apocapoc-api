@@ -8,7 +8,6 @@ type HabitEntry struct {
 	ScheduledDate time.Time
 	CompletedAt   time.Time
 	Value         *float64
-	DeletedAt     *time.Time
 }
 
 func NewHabitEntry(habitID string, scheduledDate time.Time, value *float64) *HabitEntry {
@@ -18,13 +17,4 @@ func NewHabitEntry(habitID string, scheduledDate time.Time, value *float64) *Hab
 		CompletedAt:   time.Now(),
 		Value:         value,
 	}
-}
-
-func (e *HabitEntry) Delete() {
-	now := time.Now()
-	e.DeletedAt = &now
-}
-
-func (e *HabitEntry) IsDeleted() bool {
-	return e.DeletedAt != nil
 }

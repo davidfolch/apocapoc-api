@@ -70,7 +70,7 @@ func (h *GetTodaysHabitsHandler) Handle(
 
 		isCompleted := false
 		for _, entry := range entries {
-			if entry.ScheduledDate.Equal(query.Date) && entry.DeletedAt == nil {
+			if entry.ScheduledDate.Equal(query.Date) {
 				isCompleted = true
 				break
 			}

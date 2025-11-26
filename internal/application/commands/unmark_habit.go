@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/shared/errors"
 )
@@ -57,22 +56,19 @@ func (h *UnmarkHabitHandler) Handle(ctx context.Context, cmd UnmarkHabitCommand)
 		return err
 	}
 
-	// Find the active entry for this date
-	var targetEntry *entities.HabitEntry
+	// Find the entry for this date
+	var targetEntryID string
 	for _, entry := range entries {
-		if entry.ScheduledDate.Equal(cmd.ScheduledDate) && entry.DeletedAt == nil {
-			targetEntry = entry
+		if entry.ScheduledDate.Equal(cmd.ScheduledDate) {
+			targetEntryID = entry.ID
 			break
 		}
 	}
 
-	if targetEntry == nil {
+	if targetEntryID == "" {
 		return errors.ErrNotFound
 	}
 
-	// Soft delete the entry
-	now := time.Now()
-	targetEntry.DeletedAt = &now
-
-	return h.entryRepo.Update(ctx, targetEntry)
+	// Hard delete the entry
+	return h.entryRepo.Delete(ctx, targetEntryID)
 }

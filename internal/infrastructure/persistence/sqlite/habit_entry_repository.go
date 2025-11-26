@@ -52,7 +52,7 @@ func (r *HabitEntryRepository) FindByHabitIDAndDateRange(
 	from, to time.Time,
 ) ([]*entities.HabitEntry, error) {
 	query := `
-		SELECT id, habit_id, scheduled_date, completed_at, value, deleted_at
+		SELECT id, habit_id, scheduled_date, completed_at, value
 		FROM habit_entries
 		WHERE habit_id = ?
 		  AND scheduled_date >= ?
@@ -76,11 +76,11 @@ func (r *HabitEntryRepository) FindByHabitIDAndDateRange(
 func (r *HabitEntryRepository) Update(ctx context.Context, entry *entities.HabitEntry) error {
 	query := `
 		UPDATE habit_entries
-		SET deleted_at = ?
+		SET value = ?, completed_at = ?
 		WHERE id = ?
 	`
 
-	result, err := r.db.ExecContext(ctx, query, entry.DeletedAt, entry.ID)
+	result, err := r.db.ExecContext(ctx, query, entry.Value, entry.CompletedAt, entry.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update entry: %w", err)
 	}
@@ -100,7 +100,6 @@ func (r *HabitEntryRepository) scanEntries(rows *sql.Rows) ([]*entities.HabitEnt
 		var (
 			entry         entities.HabitEntry
 			scheduledDate string
-			deletedAt     sql.NullTime
 		)
 
 		err := rows.Scan(
@@ -109,7 +108,6 @@ func (r *HabitEntryRepository) scanEntries(rows *sql.Rows) ([]*entities.HabitEnt
 			&scheduledDate,
 			&entry.CompletedAt,
 			&entry.Value,
-			&deletedAt,
 		)
 
 		if err != nil {
@@ -125,10 +123,6 @@ func (r *HabitEntryRepository) scanEntries(rows *sql.Rows) ([]*entities.HabitEnt
 		}
 		entry.ScheduledDate = parsedDate
 
-		if deletedAt.Valid {
-			entry.DeletedAt = &deletedAt.Time
-		}
-
 		entries = append(entries, &entry)
 	}
 
@@ -137,7 +131,7 @@ func (r *HabitEntryRepository) scanEntries(rows *sql.Rows) ([]*entities.HabitEnt
 
 func (r *HabitEntryRepository) FindByID(ctx context.Context, id string) (*entities.HabitEntry, error) {
 	query := `
-		SELECT id, habit_id, scheduled_date, completed_at, value, deleted_at
+		SELECT id, habit_id, scheduled_date, completed_at, value
 		FROM habit_entries
 		WHERE id = ?
 	`
@@ -145,7 +139,6 @@ func (r *HabitEntryRepository) FindByID(ctx context.Context, id string) (*entiti
 	var (
 		entry         entities.HabitEntry
 		scheduledDate string
-		deletedAt     sql.NullTime
 	)
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
@@ -154,7 +147,6 @@ func (r *HabitEntryRepository) FindByID(ctx context.Context, id string) (*entiti
 		&scheduledDate,
 		&entry.CompletedAt,
 		&entry.Value,
-		&deletedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -173,16 +165,12 @@ func (r *HabitEntryRepository) FindByID(ctx context.Context, id string) (*entiti
 	}
 	entry.ScheduledDate = parsedDate
 
-	if deletedAt.Valid {
-		entry.DeletedAt = &deletedAt.Time
-	}
-
 	return &entry, nil
 }
 
 func (r *HabitEntryRepository) FindByHabitID(ctx context.Context, habitID string) ([]*entities.HabitEntry, error) {
 	query := `
-		SELECT id, habit_id, scheduled_date, completed_at, value, deleted_at
+		SELECT id, habit_id, scheduled_date, completed_at, value
 		FROM habit_entries
 		WHERE habit_id = ?
 		ORDER BY scheduled_date DESC
@@ -199,11 +187,10 @@ func (r *HabitEntryRepository) FindByHabitID(ctx context.Context, habitID string
 
 func (r *HabitEntryRepository) FindPendingByHabitID(ctx context.Context, habitID string, beforeDate time.Time) ([]*entities.HabitEntry, error) {
 	query := `
-		SELECT id, habit_id, scheduled_date, completed_at, value, deleted_at
+		SELECT id, habit_id, scheduled_date, completed_at, value
 		FROM habit_entries
 		WHERE habit_id = ?
 		  AND scheduled_date < ?
-		  AND deleted_at IS NULL
 		ORDER BY scheduled_date DESC
 	`
 

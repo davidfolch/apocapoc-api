@@ -12,20 +12,20 @@ import (
 
 type mockEntryRepoForUnmark struct {
 	mockEntryRepo
-	entries       []*entities.HabitEntry
-	updatedEntry  *entities.HabitEntry
-	errorOnUpdate error
+	entries        []*entities.HabitEntry
+	deletedEntryID string
+	errorOnDelete  error
 }
 
 func (m *mockEntryRepoForUnmark) FindByHabitIDAndDateRange(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
 	return m.entries, nil
 }
 
-func (m *mockEntryRepoForUnmark) Update(ctx context.Context, entry *entities.HabitEntry) error {
-	if m.errorOnUpdate != nil {
-		return m.errorOnUpdate
+func (m *mockEntryRepoForUnmark) Delete(ctx context.Context, id string) error {
+	if m.errorOnDelete != nil {
+		return m.errorOnDelete
 	}
-	m.updatedEntry = entry
+	m.deletedEntryID = id
 	return nil
 }
 
@@ -59,12 +59,8 @@ func TestUnmarkHabitHandler_UnmarksSuccessfully(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if entryRepo.updatedEntry == nil {
-		t.Fatal("Expected entry to be updated")
-	}
-
-	if entryRepo.updatedEntry.DeletedAt == nil {
-		t.Error("Expected entry to be soft deleted")
+	if entryRepo.deletedEntryID != "entry-1" {
+		t.Errorf("Expected entry entry-1 to be deleted, got %s", entryRepo.deletedEntryID)
 	}
 }
 
@@ -143,36 +139,3 @@ func TestUnmarkHabitHandler_ReturnsErrorWhenEntryNotFound(t *testing.T) {
 	}
 }
 
-func TestUnmarkHabitHandler_IgnoresAlreadyDeletedEntry(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
-	habit.ID = "habit-1"
-
-	scheduledDate := time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC)
-	entry := entities.NewHabitEntry("habit-1", scheduledDate, nil)
-	entry.ID = "entry-1"
-	now := time.Now()
-	entry.DeletedAt = &now // Already deleted
-
-	habitRepo := &mockHabitRepoForUpdate{
-		habitToReturn: habit,
-	}
-
-	entryRepo := &mockEntryRepoForUnmark{
-		entries: []*entities.HabitEntry{entry},
-	}
-
-	handler := NewUnmarkHabitHandler(habitRepo, entryRepo)
-
-	cmd := UnmarkHabitCommand{
-		HabitID:       "habit-1",
-		UserID:        "user-123",
-		ScheduledDate: scheduledDate,
-	}
-
-	err := handler.Handle(context.Background(), cmd)
-
-	// Should return not found since the active entry doesn't exist
-	if err != errors.ErrNotFound {
-		t.Errorf("Expected ErrNotFound for already deleted entry, got %v", err)
-	}
-}

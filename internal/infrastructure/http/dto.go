@@ -69,6 +69,13 @@ type HabitEntryResponse struct {
 	Value         *float64  `json:"value,omitempty"`
 }
 
+type HabitEntriesResponse struct {
+	Entries []HabitEntryResponse `json:"entries"`
+	Total   int                  `json:"total"`
+	Page    int                  `json:"page"`
+	Limit   int                  `json:"limit"`
+}
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }

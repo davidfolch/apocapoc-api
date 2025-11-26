@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS habit_entries (
 	scheduled_date DATE NOT NULL,
 	completed_at DATETIME NOT NULL,
 	value REAL,
-	deleted_at DATETIME,
 	FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE,
 	UNIQUE(habit_id, scheduled_date)
 );
@@ -67,5 +66,4 @@ CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
 CREATE INDEX IF NOT EXISTS idx_habits_active ON habits(user_id, archived_at);
 CREATE INDEX IF NOT EXISTS idx_entries_habit ON habit_entries(habit_id);
 CREATE INDEX IF NOT EXISTS idx_entries_scheduled ON habit_entries(scheduled_date);
-CREATE INDEX IF NOT EXISTS idx_entries_deleted ON habit_entries(deleted_at);
 `

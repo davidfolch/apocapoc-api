@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"apocapoc-api/internal/application/commands"
@@ -250,7 +251,64 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 		UserID:  userID,
 	}
 
-	entries, err := h.getHabitEntriesHandler.Handle(r.Context(), query)
+	if fromStr := r.URL.Query().Get("from"); fromStr != "" {
+		from, err := time.Parse("2006-01-02", fromStr)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "Invalid 'from' date format (use YYYY-MM-DD)")
+			return
+		}
+		query.From = &from
+	}
+
+	if toStr := r.URL.Query().Get("to"); toStr != "" {
+		to, err := time.Parse("2006-01-02", toStr)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "Invalid 'to' date format (use YYYY-MM-DD)")
+			return
+		}
+		query.To = &to
+	}
+
+	var dateRangeDays int
+	if query.From != nil && query.To != nil {
+		dateRangeDays = int(query.To.Sub(*query.From).Hours() / 24)
+	}
+
+	requiresPagination := false
+	if query.From == nil || query.To == nil {
+		requiresPagination = true
+	} else if dateRangeDays > 365 {
+		requiresPagination = true
+	}
+
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			respondError(w, http.StatusBadRequest, "Invalid 'page' parameter")
+			return
+		}
+		query.Page = page
+	} else if requiresPagination {
+		query.Page = 1
+	}
+
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit < 1 || limit > 100 {
+			respondError(w, http.StatusBadRequest, "Invalid 'limit' parameter (must be 1-100)")
+			return
+		}
+		query.Limit = limit
+	} else if requiresPagination {
+		query.Limit = 50
+	}
+
+	if requiresPagination && query.Limit == 0 {
+		respondError(w, http.StatusBadRequest, "Pagination required: provide 'limit' parameter or use date range \u2264 1 year")
+		return
+	}
+
+	result, err := h.getHabitEntriesHandler.Handle(r.Context(), query)
 	if err != nil {
 		if err == errors.ErrNotFound {
 			respondError(w, http.StatusNotFound, "Habit not found")
@@ -264,15 +322,22 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	response := make([]HabitEntryResponse, len(entries))
-	for i, entry := range entries {
-		response[i] = HabitEntryResponse{
+	entries := make([]HabitEntryResponse, len(result.Entries))
+	for i, entry := range result.Entries {
+		entries[i] = HabitEntryResponse{
 			ID:            entry.ID,
 			HabitID:       entry.HabitID,
 			ScheduledDate: entry.ScheduledDate,
 			CompletedAt:   entry.CompletedAt,
 			Value:         entry.Value,
 		}
+	}
+
+	response := HabitEntriesResponse{
+		Entries: entries,
+		Total:   result.Total,
+		Page:    result.Page,
+		Limit:   result.Limit,
 	}
 
 	respondJSON(w, http.StatusOK, response)
