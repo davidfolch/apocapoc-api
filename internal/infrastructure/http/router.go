@@ -35,8 +35,14 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 	r.Route("/api/v1/habits", func(r chi.Router) {
 		r.Use(AuthMiddleware(jwtService))
 		r.Post("/", habitHandlers.CreateHabit)
+		r.Get("/", habitHandlers.GetUserHabits)
 		r.Get("/today", habitHandlers.GetTodaysHabits)
+		r.Get("/{id}", habitHandlers.GetHabitByID)
+		r.Put("/{id}", habitHandlers.UpdateHabit)
+		r.Delete("/{id}", habitHandlers.ArchiveHabit)
+		r.Get("/{id}/entries", habitHandlers.GetHabitEntries)
 		r.Post("/{id}/mark", habitHandlers.MarkHabit)
+		r.Delete("/{id}/entries/{date}", habitHandlers.UnmarkHabit)
 	})
 
 	return r

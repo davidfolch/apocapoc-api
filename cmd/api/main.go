@@ -42,10 +42,16 @@ func main() {
 	loginHandler := queries.NewLoginUserHandler(userRepo)
 	createHandler := commands.NewCreateHabitHandler(habitRepo)
 	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
+	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)
+	getHabitByIDHandler := queries.NewGetHabitByIDHandler(habitRepo)
+	getHabitEntriesHandler := queries.NewGetHabitEntriesHandler(habitRepo, entryRepo)
+	updateHandler := commands.NewUpdateHabitHandler(habitRepo)
+	archiveHandler := commands.NewArchiveHabitHandler(habitRepo)
 	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
+	unmarkHandler := commands.NewUnmarkHabitHandler(habitRepo, entryRepo)
 
 	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, jwtService)
-	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, markHandler)
+	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
 
 	router := httpInfra.NewRouter(cfg.CORSOrigins, habitHandlers, authHandlers, jwtService)
 
