@@ -7,3 +7,4 @@ apocapoc-api
 dist/
 bin/
 .internal-notes/
+docker-compose.dev.yml
