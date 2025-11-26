@@ -2,12 +2,14 @@ package http
 
 import (
 	"net/http"
+	"time"
 
 	"apocapoc-api/internal/infrastructure/auth"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	_ "apocapoc-api/docs"
@@ -38,6 +40,7 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 	})
 
 	r.Route("/api/v1/auth", func(r chi.Router) {
+		r.Use(httprate.LimitByIP(10, 1*time.Minute))
 		r.Post("/register", authHandlers.Register)
 		r.Post("/login", authHandlers.Login)
 	})

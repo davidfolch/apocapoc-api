@@ -8,8 +8,10 @@ Self-hosted habit tracking service with a clean, hexagonal architecture.
 - **Flexible scheduling**: Daily, Weekly, Monthly with specific days
 - **Carry-over support**: Choose if incomplete habits persist or expire
 - **Full history tracking**: Complete audit trail of all interactions
-- **Charts & Analytics**: Heatmaps, line charts, and statistics
+- **Statistics**: Track streaks, completion rates, and progress
 - **Self-hosted first**: Easy deployment with SQLite
+- **Security**: JWT authentication, rate limiting on auth endpoints
+- **API Documentation**: Interactive Swagger UI
 
 ## Quick Start
 
