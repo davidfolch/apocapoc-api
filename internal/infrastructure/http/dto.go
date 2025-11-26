@@ -1,16 +1,20 @@
 package http
 
-import "time"
+import (
+	"time"
+
+	"apocapoc-api/internal/domain/value_objects"
+)
 
 type CreateHabitRequest struct {
-	Name          string   `json:"name"`
-	Description   string   `json:"description"`
-	Type          string   `json:"type"`
-	Frequency     string   `json:"frequency"`
-	SpecificDays  []int    `json:"specific_days,omitempty"`
-	SpecificDates []int    `json:"specific_dates,omitempty"`
-	CarryOver     bool     `json:"carry_over"`
-	TargetValue   *float64 `json:"target_value,omitempty"`
+	Name          string                   `json:"name"`
+	Description   string                   `json:"description"`
+	Type          value_objects.HabitType  `json:"type"`
+	Frequency     value_objects.Frequency  `json:"frequency"`
+	SpecificDays  []int                    `json:"specific_days,omitempty"`
+	SpecificDates []int                    `json:"specific_dates,omitempty"`
+	CarryOver     bool                     `json:"carry_over"`
+	TargetValue   *float64                 `json:"target_value,omitempty"`
 }
 
 type UpdateHabitRequest struct {
@@ -23,18 +27,18 @@ type UpdateHabitRequest struct {
 }
 
 type HabitResponse struct {
-	ID            string     `json:"id"`
-	UserID        string     `json:"user_id"`
-	Name          string     `json:"name"`
-	Description   string     `json:"description"`
-	Type          string     `json:"type"`
-	Frequency     string     `json:"frequency"`
-	SpecificDays  []int      `json:"specific_days,omitempty"`
-	SpecificDates []int      `json:"specific_dates,omitempty"`
-	CarryOver     bool       `json:"carry_over"`
-	TargetValue   *float64   `json:"target_value,omitempty"`
-	CreatedAt     time.Time  `json:"created_at"`
-	ArchivedAt    *time.Time `json:"archived_at,omitempty"`
+	ID            string                   `json:"id"`
+	UserID        string                   `json:"user_id"`
+	Name          string                   `json:"name"`
+	Description   string                   `json:"description"`
+	Type          value_objects.HabitType  `json:"type"`
+	Frequency     value_objects.Frequency  `json:"frequency"`
+	SpecificDays  []int                    `json:"specific_days,omitempty"`
+	SpecificDates []int                    `json:"specific_dates,omitempty"`
+	CarryOver     bool                     `json:"carry_over"`
+	TargetValue   *float64                 `json:"target_value,omitempty"`
+	CreatedAt     time.Time                `json:"created_at"`
+	ArchivedAt    *time.Time               `json:"archived_at,omitempty"`
 }
 
 type MarkHabitRequest struct {
@@ -43,22 +47,22 @@ type MarkHabitRequest struct {
 }
 
 type TodaysHabitResponse struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	Type          string    `json:"type"`
-	TargetValue   *float64  `json:"target_value,omitempty"`
-	ScheduledDate time.Time `json:"scheduled_date"`
-	IsCarriedOver bool      `json:"is_carried_over"`
+	ID            string                  `json:"id"`
+	Name          string                  `json:"name"`
+	Type          value_objects.HabitType `json:"type"`
+	TargetValue   *float64                `json:"target_value,omitempty"`
+	ScheduledDate time.Time               `json:"scheduled_date"`
+	IsCarriedOver bool                    `json:"is_carried_over"`
 }
 
 type UserHabitResponse struct {
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Type         string   `json:"type"`
-	Frequency    string   `json:"frequency"`
-	SpecificDays []int    `json:"specific_days,omitempty"`
-	TargetValue  *float64 `json:"target_value,omitempty"`
-	CarryOver    bool     `json:"carry_over"`
+	ID           string                   `json:"id"`
+	Name         string                   `json:"name"`
+	Type         value_objects.HabitType  `json:"type"`
+	Frequency    value_objects.Frequency  `json:"frequency"`
+	SpecificDays []int                    `json:"specific_days,omitempty"`
+	TargetValue  *float64                 `json:"target_value,omitempty"`
+	CarryOver    bool                     `json:"carry_over"`
 }
 
 type HabitEntryResponse struct {

@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/domain/value_objects"
 	"apocapoc-api/internal/shared/utils"
 )
 
 type TodaysHabitDTO struct {
 	ID            string
 	Name          string
-	Type          string
+	Type          value_objects.HabitType
 	TargetValue   *float64
 	ScheduledDate time.Time
 	IsCarriedOver bool
@@ -80,7 +81,7 @@ func (h *GetTodaysHabitsHandler) Handle(
 			result = append(result, TodaysHabitDTO{
 				ID:            habit.ID,
 				Name:          habit.Name,
-				Type:          string(habit.Type),
+				Type:          habit.Type,
 				TargetValue:   habit.TargetValue,
 				ScheduledDate: query.Date,
 				IsCarriedOver: !shouldAppear && habit.CarryOver,

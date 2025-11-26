@@ -35,8 +35,8 @@ func (h *GetHabitByIDHandler) Handle(ctx context.Context, query GetHabitByIDQuer
 	return &HabitDTO{
 		ID:           habit.ID,
 		Name:         habit.Name,
-		Type:         string(habit.Type),
-		Frequency:    string(habit.Frequency),
+		Type:         habit.Type,
+		Frequency:    habit.Frequency,
 		TargetValue:  habit.TargetValue,
 		CarryOver:    habit.CarryOver,
 		SpecificDays: habit.SpecificDays,

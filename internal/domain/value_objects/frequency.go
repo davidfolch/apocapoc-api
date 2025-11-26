@@ -1,5 +1,10 @@
 package value_objects
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type Frequency string
 
 const (
@@ -14,4 +19,22 @@ func (f Frequency) IsValid() bool {
 		return true
 	}
 	return false
+}
+
+func (f Frequency) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(f))
+}
+
+func (f *Frequency) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	*f = Frequency(s)
+	if !f.IsValid() {
+		return fmt.Errorf("invalid frequency: %s (must be DAILY, WEEKLY, or MONTHLY)", s)
+	}
+
+	return nil
 }

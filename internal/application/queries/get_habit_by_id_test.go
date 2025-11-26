@@ -53,7 +53,7 @@ func TestGetHabitByIDHandler_ReturnsHabitSuccessfully(t *testing.T) {
 		t.Errorf("Expected name 'Drink Water', got %s", result.Name)
 	}
 
-	if result.Type != string(value_objects.HabitTypeValue) {
+	if result.Type != value_objects.HabitTypeValue {
 		t.Errorf("Expected type %s, got %s", value_objects.HabitTypeValue, result.Type)
 	}
 

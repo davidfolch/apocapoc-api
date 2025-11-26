@@ -13,8 +13,8 @@ type CreateHabitCommand struct {
 	UserID        string
 	Name          string
 	Description   string
-	Type          string
-	Frequency     string
+	Type          value_objects.HabitType
+	Frequency     value_objects.Frequency
 	SpecificDays  []int
 	SpecificDates []int
 	CarryOver     bool
@@ -30,25 +30,23 @@ func NewCreateHabitHandler(habitRepo repositories.HabitRepository) *CreateHabitH
 }
 
 func (h *CreateHabitHandler) Handle(ctx context.Context, cmd CreateHabitCommand) (string, error) {
-	habitType := value_objects.HabitType(cmd.Type)
-	if !habitType.IsValid() {
+	if !cmd.Type.IsValid() {
 		return "", errors.ErrInvalidInput
 	}
 
-	frequency := value_objects.Frequency(cmd.Frequency)
-	if !frequency.IsValid() {
+	if !cmd.Frequency.IsValid() {
 		return "", errors.ErrInvalidInput
 	}
 
-	if frequency == value_objects.FrequencyWeekly && len(cmd.SpecificDays) == 0 {
+	if cmd.Frequency == value_objects.FrequencyWeekly && len(cmd.SpecificDays) == 0 {
 		return "", errors.ErrInvalidInput
 	}
 
-	if frequency == value_objects.FrequencyMonthly && len(cmd.SpecificDates) == 0 {
+	if cmd.Frequency == value_objects.FrequencyMonthly && len(cmd.SpecificDates) == 0 {
 		return "", errors.ErrInvalidInput
 	}
 
-	habit := entities.NewHabit(cmd.UserID, cmd.Name, habitType, frequency, cmd.CarryOver)
+	habit := entities.NewHabit(cmd.UserID, cmd.Name, cmd.Type, cmd.Frequency, cmd.CarryOver)
 	habit.Description = cmd.Description
 	habit.SpecificDays = cmd.SpecificDays
 	habit.SpecificDates = cmd.SpecificDates
