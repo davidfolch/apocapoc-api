@@ -4,9 +4,8 @@ import (
 	"context"
 
 	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/domain/services"
 	"apocapoc-api/internal/shared/errors"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginUserQuery struct {
@@ -21,11 +20,15 @@ type LoginUserResult struct {
 }
 
 type LoginUserHandler struct {
-	userRepo repositories.UserRepository
+	userRepo       repositories.UserRepository
+	passwordHasher services.PasswordHasher
 }
 
-func NewLoginUserHandler(userRepo repositories.UserRepository) *LoginUserHandler {
-	return &LoginUserHandler{userRepo: userRepo}
+func NewLoginUserHandler(userRepo repositories.UserRepository, passwordHasher services.PasswordHasher) *LoginUserHandler {
+	return &LoginUserHandler{
+		userRepo:       userRepo,
+		passwordHasher: passwordHasher,
+	}
 }
 
 func (h *LoginUserHandler) Handle(ctx context.Context, query LoginUserQuery) (*LoginUserResult, error) {
@@ -38,7 +41,7 @@ func (h *LoginUserHandler) Handle(ctx context.Context, query LoginUserQuery) (*L
 		return nil, errors.ErrNotFound
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(query.Password)); err != nil {
+	if err := h.passwordHasher.Compare(user.PasswordHash, query.Password); err != nil {
 		return nil, errors.ErrNotFound
 	}
 

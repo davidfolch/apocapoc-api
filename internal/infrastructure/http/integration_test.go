@@ -11,6 +11,7 @@ import (
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
 	"apocapoc-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/infrastructure/crypto"
 	"apocapoc-api/internal/infrastructure/persistence/sqlite"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -32,13 +33,14 @@ func setupTestServer(t *testing.T) *TestServer {
 	}
 
 	jwtService := auth.NewJWTService("test-secret", 24)
+	passwordHasher := crypto.NewBcryptHasher()
 
 	userRepo := sqlite.NewUserRepository(db)
 	habitRepo := sqlite.NewHabitRepository(db)
 	entryRepo := sqlite.NewHabitEntryRepository(db)
 
-	registerHandler := commands.NewRegisterUserHandler(userRepo)
-	loginHandler := queries.NewLoginUserHandler(userRepo)
+	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher)
+	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
 	createHandler := commands.NewCreateHabitHandler(habitRepo)
 	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
 	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)

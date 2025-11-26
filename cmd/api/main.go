@@ -11,6 +11,7 @@ import (
 	"apocapoc-api/internal/application/queries"
 	"apocapoc-api/internal/infrastructure/auth"
 	"apocapoc-api/internal/infrastructure/config"
+	"apocapoc-api/internal/infrastructure/crypto"
 	httpInfra "apocapoc-api/internal/infrastructure/http"
 	"apocapoc-api/internal/infrastructure/persistence/sqlite"
 )
@@ -52,13 +53,14 @@ func main() {
 	}
 
 	jwtService := auth.NewJWTService(cfg.JWTSecret, jwtExpiryHours)
+	passwordHasher := crypto.NewBcryptHasher()
 
 	userRepo := sqlite.NewUserRepository(db.Conn())
 	habitRepo := sqlite.NewHabitRepository(db.Conn())
 	entryRepo := sqlite.NewHabitEntryRepository(db.Conn())
 
-	registerHandler := commands.NewRegisterUserHandler(userRepo)
-	loginHandler := queries.NewLoginUserHandler(userRepo)
+	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher)
+	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
 	createHandler := commands.NewCreateHabitHandler(habitRepo)
 	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
 	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)

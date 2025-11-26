@@ -5,9 +5,8 @@ import (
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/domain/services"
 	"apocapoc-api/internal/shared/errors"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterUserCommand struct {
@@ -17,11 +16,15 @@ type RegisterUserCommand struct {
 }
 
 type RegisterUserHandler struct {
-	userRepo repositories.UserRepository
+	userRepo       repositories.UserRepository
+	passwordHasher services.PasswordHasher
 }
 
-func NewRegisterUserHandler(userRepo repositories.UserRepository) *RegisterUserHandler {
-	return &RegisterUserHandler{userRepo: userRepo}
+func NewRegisterUserHandler(userRepo repositories.UserRepository, passwordHasher services.PasswordHasher) *RegisterUserHandler {
+	return &RegisterUserHandler{
+		userRepo:       userRepo,
+		passwordHasher: passwordHasher,
+	}
 }
 
 func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserCommand) (string, error) {
@@ -38,7 +41,7 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 		return "", errors.ErrAlreadyExists
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(cmd.Password), bcrypt.DefaultCost)
+	hashedPassword, err := h.passwordHasher.Hash(cmd.Password)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +51,7 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 		timezone = "UTC"
 	}
 
-	user := entities.NewUser(cmd.Email, string(hashedPassword), timezone)
+	user := entities.NewUser(cmd.Email, hashedPassword, timezone)
 
 	if err := h.userRepo.Create(ctx, user); err != nil {
 		return "", err
