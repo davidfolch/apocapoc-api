@@ -20,6 +20,10 @@ func (m *mockEntryRepoWithFindByHabitID) FindByHabitID(ctx context.Context, habi
 	return m.entries, nil
 }
 
+func (m *mockEntryRepoWithFindByHabitID) FindByHabitIDAndDateRange(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+	return m.entries, nil
+}
+
 func TestGetHabitEntriesHandler_ReturnsEntriesSuccessfully(t *testing.T) {
 	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
 	habit.ID = "habit-1"

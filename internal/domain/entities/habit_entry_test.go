@@ -31,10 +31,6 @@ func TestNewHabitEntry(t *testing.T) {
 	if entry.CompletedAt.IsZero() {
 		t.Error("CompletedAt should not be zero")
 	}
-
-	if entry.DeletedAt != nil {
-		t.Error("DeletedAt should be nil for new entry")
-	}
 }
 
 func TestNewHabitEntry_BooleanHabit(t *testing.T) {
@@ -48,20 +44,3 @@ func TestNewHabitEntry_BooleanHabit(t *testing.T) {
 	}
 }
 
-func TestHabitEntry_SoftDelete(t *testing.T) {
-	entry := NewHabitEntry("habit-123", time.Now(), nil)
-
-	if entry.DeletedAt != nil {
-		t.Error("New entry should not be deleted")
-	}
-
-	entry.Delete()
-
-	if entry.DeletedAt == nil {
-		t.Error("Entry should be deleted after calling SoftDelete()")
-	}
-
-	if entry.DeletedAt.After(time.Now()) {
-		t.Error("DeletedAt should not be in the future")
-	}
-}

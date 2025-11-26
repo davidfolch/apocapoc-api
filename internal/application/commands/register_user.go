@@ -7,6 +7,7 @@ import (
 	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/domain/services"
 	"apocapoc-api/internal/shared/errors"
+	"apocapoc-api/internal/shared/validation"
 )
 
 type RegisterUserCommand struct {
@@ -28,11 +29,7 @@ func NewRegisterUserHandler(userRepo repositories.UserRepository, passwordHasher
 }
 
 func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserCommand) (string, error) {
-	if cmd.Email == "" || cmd.Password == "" {
-		return "", errors.ErrInvalidInput
-	}
-
-	if len(cmd.Password) < 8 {
+	if err := validation.ValidateRegistration(cmd.Email, cmd.Password, cmd.Timezone); err != nil {
 		return "", errors.ErrInvalidInput
 	}
 
@@ -46,12 +43,7 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 		return "", err
 	}
 
-	timezone := cmd.Timezone
-	if timezone == "" {
-		timezone = "UTC"
-	}
-
-	user := entities.NewUser(cmd.Email, hashedPassword, timezone)
+	user := entities.NewUser(cmd.Email, hashedPassword, cmd.Timezone)
 
 	if err := h.userRepo.Create(ctx, user); err != nil {
 		return "", err
