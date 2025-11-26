@@ -74,8 +74,8 @@ The API will be available at `http://localhost:8080`
 ### Running locally with Docker (Recommended)
 
 ```bash
-cp docker-compose.dev.example.yml docker-compose.dev.yml
-docker-compose -f docker-compose.dev.yml up --build
+cp docker-compose.example.yml docker-compose.yml
+docker-compose up --build
 ```
 
 The API will be available at `http://localhost:8080`
