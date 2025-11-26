@@ -13,7 +13,7 @@ import (
 	_ "apocapoc-api/docs"
 )
 
-func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, jwtService *auth.JWTService) *chi.Mux {
+func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, jwtService *auth.JWTService) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -53,6 +53,11 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 		r.Get("/{id}/entries", habitHandlers.GetHabitEntries)
 		r.Post("/{id}/mark", habitHandlers.MarkHabit)
 		r.Delete("/{id}/entries/{date}", habitHandlers.UnmarkHabit)
+	})
+
+	r.Route("/api/v1/stats", func(r chi.Router) {
+		r.Use(AuthMiddleware(jwtService))
+		r.Get("/habits/{id}", statsHandlers.GetHabitStats)
 	})
 
 	return r

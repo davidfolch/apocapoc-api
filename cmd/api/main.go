@@ -64,6 +64,7 @@ func main() {
 	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)
 	getHabitByIDHandler := queries.NewGetHabitByIDHandler(habitRepo)
 	getHabitEntriesHandler := queries.NewGetHabitEntriesHandler(habitRepo, entryRepo)
+	getHabitStatsHandler := queries.NewGetHabitStatsHandler(habitRepo, entryRepo)
 	updateHandler := commands.NewUpdateHabitHandler(habitRepo)
 	archiveHandler := commands.NewArchiveHabitHandler(habitRepo)
 	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
@@ -71,8 +72,9 @@ func main() {
 
 	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, jwtService)
 	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
+	statsHandlers := httpInfra.NewStatsHandlers(getHabitStatsHandler)
 
-	router := httpInfra.NewRouter(cfg.CORSOrigins, habitHandlers, authHandlers, jwtService)
+	router := httpInfra.NewRouter(cfg.CORSOrigins, habitHandlers, authHandlers, statsHandlers, jwtService)
 
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 	log.Printf("Server starting on %s", addr)
