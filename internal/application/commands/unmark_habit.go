@@ -30,7 +30,6 @@ func NewUnmarkHabitHandler(
 }
 
 func (h *UnmarkHabitHandler) Handle(ctx context.Context, cmd UnmarkHabitCommand) error {
-	// Verify habit exists and user owns it
 	habit, err := h.habitRepo.FindByID(ctx, cmd.HabitID)
 	if err != nil {
 		return err
@@ -40,8 +39,6 @@ func (h *UnmarkHabitHandler) Handle(ctx context.Context, cmd UnmarkHabitCommand)
 		return errors.ErrUnauthorized
 	}
 
-	// Find the entry for the scheduled date
-	// We search within the same day
 	startOfDay := time.Date(
 		cmd.ScheduledDate.Year(),
 		cmd.ScheduledDate.Month(),
@@ -56,7 +53,6 @@ func (h *UnmarkHabitHandler) Handle(ctx context.Context, cmd UnmarkHabitCommand)
 		return err
 	}
 
-	// Find the entry for this date
 	var targetEntryID string
 	for _, entry := range entries {
 		if entry.ScheduledDate.Equal(cmd.ScheduledDate) {
@@ -69,6 +65,5 @@ func (h *UnmarkHabitHandler) Handle(ctx context.Context, cmd UnmarkHabitCommand)
 		return errors.ErrNotFound
 	}
 
-	// Hard delete the entry
 	return h.entryRepo.Delete(ctx, targetEntryID)
 }

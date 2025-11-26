@@ -98,7 +98,6 @@ func TestArchiveHabitHandler_CanArchiveAlreadyArchivedHabit(t *testing.T) {
 
 	err := handler.Handle(context.Background(), cmd)
 
-	// Should be idempotent - no error
 	if err != nil {
 		t.Fatalf("Expected no error for already archived habit, got %v", err)
 	}

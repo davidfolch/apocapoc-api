@@ -32,7 +32,6 @@ func TestNewUser(t *testing.T) {
 		t.Error("UpdatedAt should not be zero")
 	}
 
-	// CreatedAt and UpdatedAt should be very close in time
 	diff := user.UpdatedAt.Sub(user.CreatedAt)
 	if diff < 0 || diff > time.Second {
 		t.Errorf("CreatedAt and UpdatedAt should be nearly identical, diff: %v", diff)

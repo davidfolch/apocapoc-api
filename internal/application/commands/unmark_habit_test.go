@@ -119,7 +119,6 @@ func TestUnmarkHabitHandler_ReturnsErrorWhenEntryNotFound(t *testing.T) {
 		habitToReturn: habit,
 	}
 
-	// No entries
 	entryRepo := &mockEntryRepoForUnmark{
 		entries: []*entities.HabitEntry{},
 	}

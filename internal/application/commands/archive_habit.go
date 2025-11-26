@@ -23,20 +23,16 @@ func NewArchiveHabitHandler(habitRepo repositories.HabitRepository) *ArchiveHabi
 }
 
 func (h *ArchiveHabitHandler) Handle(ctx context.Context, cmd ArchiveHabitCommand) error {
-	// Find existing habit
 	habit, err := h.habitRepo.FindByID(ctx, cmd.HabitID)
 	if err != nil {
 		return err
 	}
 
-	// Check ownership
 	if habit.UserID != cmd.UserID {
 		return errors.ErrUnauthorized
 	}
 
-	// Archive the habit (idempotent operation)
 	habit.Archive()
 
-	// Save changes
 	return h.habitRepo.Update(ctx, habit)
 }

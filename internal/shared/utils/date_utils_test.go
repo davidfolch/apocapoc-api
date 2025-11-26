@@ -6,7 +6,6 @@ import (
 )
 
 func TestShouldAppearToday_Daily(t *testing.T) {
-	// Daily habits should always appear
 	result := ShouldAppearToday("DAILY", nil, nil, time.Now())
 	if !result {
 		t.Error("Daily habit should appear every day")
