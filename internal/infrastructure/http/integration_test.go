@@ -1,0 +1,94 @@
+package http
+
+import (
+	"bytes"
+	"database/sql"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"apocapoc-api/internal/application/commands"
+	"apocapoc-api/internal/application/queries"
+	"apocapoc-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/infrastructure/persistence/sqlite"
+
+	_ "github.com/mattn/go-sqlite3"
+)
+
+type TestServer struct {
+	Router *http.Handler
+	DB     *sql.DB
+}
+
+func setupTestServer(t *testing.T) *TestServer {
+	db, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatalf("Failed to open test database: %v", err)
+	}
+
+	if err := sqlite.RunMigrations(db); err != nil {
+		t.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	jwtService := auth.NewJWTService("test-secret", 24)
+
+	userRepo := sqlite.NewUserRepository(db)
+	habitRepo := sqlite.NewHabitRepository(db)
+	entryRepo := sqlite.NewHabitEntryRepository(db)
+
+	registerHandler := commands.NewRegisterUserHandler(userRepo)
+	loginHandler := queries.NewLoginUserHandler(userRepo)
+	createHandler := commands.NewCreateHabitHandler(habitRepo)
+	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
+	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)
+	getHabitByIDHandler := queries.NewGetHabitByIDHandler(habitRepo)
+	getHabitEntriesHandler := queries.NewGetHabitEntriesHandler(habitRepo, entryRepo)
+	updateHandler := commands.NewUpdateHabitHandler(habitRepo)
+	archiveHandler := commands.NewArchiveHabitHandler(habitRepo)
+	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
+	unmarkHandler := commands.NewUnmarkHabitHandler(habitRepo, entryRepo)
+
+	authHandlers := NewAuthHandlers(registerHandler, loginHandler, jwtService)
+	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
+
+	router := NewRouter("*", habitHandlers, authHandlers, jwtService)
+
+	handler := http.Handler(router)
+	return &TestServer{
+		Router: &handler,
+		DB:     db,
+	}
+}
+
+func (ts *TestServer) Close() {
+	ts.DB.Close()
+}
+
+func makeRequest(t *testing.T, handler http.Handler, method, path string, body interface{}, authToken string) *httptest.ResponseRecorder {
+	var bodyBytes []byte
+	if body != nil {
+		var err error
+		bodyBytes, err = json.Marshal(body)
+		if err != nil {
+			t.Fatalf("Failed to marshal request body: %v", err)
+		}
+	}
+
+	req := httptest.NewRequest(method, path, bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	if authToken != "" {
+		req.Header.Set("Authorization", "Bearer "+authToken)
+	}
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	return rr
+}
+
+func decodeResponse(t *testing.T, rr *httptest.ResponseRecorder, target interface{}) {
+	if err := json.NewDecoder(rr.Body).Decode(target); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+}
