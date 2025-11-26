@@ -8,6 +8,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	httpSwagger "github.com/swaggo/http-swagger"
+
+	_ "apocapoc-api/docs"
 )
 
 func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, jwtService *auth.JWTService) *chi.Mux {
@@ -21,6 +24,13 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
+
+	r.Get("/api/v1/docs", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/api/v1/docs/index.html", http.StatusMovedPermanently)
+	})
+	r.Get("/api/v1/docs/*", httpSwagger.Handler(
+		httpSwagger.URL("/api/v1/docs/doc.json"),
+	))
 
 	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

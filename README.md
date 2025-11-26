@@ -79,7 +79,7 @@ go run cmd/api/main.go
 
 ## API Documentation
 
-Once running, visit `http://localhost:8080/api/v1/docs` for interactive API documentation.
+Once running, visit `http://localhost:8080/api/v1/docs` for interactive Swagger documentation.
 
 ## Architecture
 

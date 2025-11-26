@@ -49,6 +49,19 @@ func NewHabitHandlers(
 	}
 }
 
+// CreateHabit godoc
+// @Summary Create a new habit
+// @Description Create a new habit for the authenticated user
+// @Tags habits
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body CreateHabitRequest true "Habit data"
+// @Success 201 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits [post]
 func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 	var req CreateHabitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -87,6 +100,16 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, map[string]string{"id": habitID})
 }
 
+// GetUserHabits godoc
+// @Summary Get all user habits
+// @Description Get all active habits for the authenticated user
+// @Tags habits
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} UserHabitResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits [get]
 func (h *HabitHandlers) GetUserHabits(w http.ResponseWriter, r *http.Request) {
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
@@ -120,6 +143,19 @@ func (h *HabitHandlers) GetUserHabits(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, response)
 }
 
+// GetHabitByID godoc
+// @Summary Get habit by ID
+// @Description Get a specific habit by ID
+// @Tags habits
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Habit ID"
+// @Success 200 {object} UserHabitResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits/{id} [get]
 func (h *HabitHandlers) GetHabitByID(w http.ResponseWriter, r *http.Request) {
 	habitID := chi.URLParam(r, "id")
 
@@ -161,6 +197,22 @@ func (h *HabitHandlers) GetHabitByID(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, response)
 }
 
+// UpdateHabit godoc
+// @Summary Update habit
+// @Description Update an existing habit
+// @Tags habits
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Habit ID"
+// @Param request body UpdateHabitRequest true "Update data"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits/{id} [put]
 func (h *HabitHandlers) UpdateHabit(w http.ResponseWriter, r *http.Request) {
 	habitID := chi.URLParam(r, "id")
 
@@ -207,6 +259,19 @@ func (h *HabitHandlers) UpdateHabit(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 }
 
+// ArchiveHabit godoc
+// @Summary Archive habit
+// @Description Archive (soft delete) a habit
+// @Tags habits
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Habit ID"
+// @Success 200 {object} map[string]string
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits/{id} [delete]
 func (h *HabitHandlers) ArchiveHabit(w http.ResponseWriter, r *http.Request) {
 	habitID := chi.URLParam(r, "id")
 
@@ -237,6 +302,24 @@ func (h *HabitHandlers) ArchiveHabit(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"status": "archived"})
 }
 
+// GetHabitEntries godoc
+// @Summary Get habit entries
+// @Description Get entries (completion history) for a habit with optional date filtering and pagination
+// @Tags habits
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Habit ID"
+// @Param from query string false "Start date (YYYY-MM-DD)"
+// @Param to query string false "End date (YYYY-MM-DD)"
+// @Param page query int false "Page number"
+// @Param limit query int false "Page size (max 100)"
+// @Success 200 {object} HabitEntriesResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits/{id}/entries [get]
 func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) {
 	habitID := chi.URLParam(r, "id")
 
@@ -343,6 +426,16 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 	respondJSON(w, http.StatusOK, response)
 }
 
+// GetTodaysHabits godoc
+// @Summary Get today's habits
+// @Description Get all habits scheduled for today for the authenticated user
+// @Tags habits
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} TodaysHabitResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits/today [get]
 func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) {
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
@@ -379,6 +472,21 @@ func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) 
 	respondJSON(w, http.StatusOK, response)
 }
 
+// MarkHabit godoc
+// @Summary Mark habit as complete
+// @Description Mark a habit as completed for a specific date
+// @Tags habits
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Habit ID"
+// @Param request body MarkHabitRequest true "Mark data"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits/{id}/mark [post]
 func (h *HabitHandlers) MarkHabit(w http.ResponseWriter, r *http.Request) {
 	habitID := chi.URLParam(r, "id")
 
@@ -416,6 +524,21 @@ func (h *HabitHandlers) MarkHabit(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"status": "marked"})
 }
 
+// UnmarkHabit godoc
+// @Summary Unmark habit
+// @Description Delete a habit entry (unmark completion)
+// @Tags habits
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Habit ID"
+// @Param date path string true "Date (YYYY-MM-DD)"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /habits/{id}/entries/{date} [delete]
 func (h *HabitHandlers) UnmarkHabit(w http.ResponseWriter, r *http.Request) {
 	habitID := chi.URLParam(r, "id")
 	dateStr := chi.URLParam(r, "date")

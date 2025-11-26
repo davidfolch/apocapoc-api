@@ -8,6 +8,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+RUN go run github.com/swaggo/swag/cmd/swag@latest init -g cmd/api/main.go
+RUN go mod tidy
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o apocapoc-api cmd/api/main.go
 
 FROM alpine:latest
