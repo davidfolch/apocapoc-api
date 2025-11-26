@@ -15,7 +15,7 @@ import (
 	_ "apocapoc-api/docs"
 )
 
-func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, jwtService *auth.JWTService) *chi.Mux {
+func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, healthHandlers *HealthHandlers, jwtService *auth.JWTService) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -34,10 +34,7 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 		httpSwagger.URL("/api/v1/docs/doc.json"),
 	))
 
-	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
-	})
+	r.Get("/api/v1/health", healthHandlers.Health)
 
 	r.Route("/api/v1/auth", func(r chi.Router) {
 		r.Use(httprate.LimitByIP(10, 1*time.Minute))

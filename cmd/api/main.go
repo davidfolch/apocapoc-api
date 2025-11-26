@@ -73,8 +73,9 @@ func main() {
 	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, jwtService)
 	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
 	statsHandlers := httpInfra.NewStatsHandlers(getHabitStatsHandler)
+	healthHandlers := httpInfra.NewHealthHandlers(db.Conn())
 
-	router := httpInfra.NewRouter(cfg.CORSOrigins, habitHandlers, authHandlers, statsHandlers, jwtService)
+	router := httpInfra.NewRouter(cfg.CORSOrigins, habitHandlers, authHandlers, statsHandlers, healthHandlers, jwtService)
 
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 	log.Printf("Server starting on %s", addr)
