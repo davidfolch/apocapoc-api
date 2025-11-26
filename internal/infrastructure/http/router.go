@@ -3,12 +3,14 @@ package http
 import (
 	"net/http"
 
+	"habit-tracker-api/internal/infrastructure/auth"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
-func NewRouter(corsOrigins string, habitHandlers *HabitHandlers) *chi.Mux {
+func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, jwtService *auth.JWTService) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -25,7 +27,13 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers) *chi.Mux {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	r.Route("/api/v1/auth", func(r chi.Router) {
+		r.Post("/register", authHandlers.Register)
+		r.Post("/login", authHandlers.Login)
+	})
+
 	r.Route("/api/v1/habits", func(r chi.Router) {
+		r.Use(AuthMiddleware(jwtService))
 		r.Post("/", habitHandlers.CreateHabit)
 		r.Get("/today", habitHandlers.GetTodaysHabits)
 		r.Post("/{id}/mark", habitHandlers.MarkHabit)

@@ -37,7 +37,11 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := "user-123"
+	userID, ok := GetUserIDFromContext(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
 
 	cmd := commands.CreateHabitCommand{
 		UserID:        userID,
@@ -65,7 +69,12 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) {
-	userID := "user-123"
+	userID, ok := GetUserIDFromContext(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
 	timezone := "UTC"
 
 	query := queries.GetTodaysHabitsQuery{
