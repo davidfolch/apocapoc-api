@@ -18,7 +18,6 @@ import (
 )
 
 // @title Apocapoc API
-// @version 1.0
 // @description Self-hosted habit tracking service
 // @termsOfService http://swagger.io/terms/
 

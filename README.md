@@ -50,6 +50,12 @@ docker-compose up -d
 
 The API will be available at `http://localhost:8080`
 
+**Available image tags:**
+- `latest`: Latest stable release (recommended for production)
+- `1`, `1.0`, `1.0.0`: Specific version tags
+- `edge`: Latest development build from main branch (unstable)
+- `sha-abc123`: Specific commit (for debugging)
+
 **Configuration options:**
 - `JWT_SECRET`: **Required**. Use a long random string
 - `JWT_EXPIRY`: Token expiration (e.g., `24h`, `48h`)

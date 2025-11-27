@@ -213,7 +213,6 @@ info:
     url: https://opensource.org/licenses/MIT
   termsOfService: http://swagger.io/terms/
   title: Apocapoc API
-  version: "1.0"
 paths:
   /auth/login:
     post:
