@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
@@ -51,15 +52,24 @@ func main() {
 		log.Fatalf("Invalid JWT_EXPIRY: %v", err)
 	}
 
+	refreshTokenExpiry, err := parseDuration(cfg.RefreshTokenExpiry)
+	if err != nil {
+		log.Fatalf("Invalid REFRESH_TOKEN_EXPIRY: %v", err)
+	}
+
 	jwtService := auth.NewJWTService(cfg.JWTSecret, jwtExpiryHours)
 	passwordHasher := crypto.NewBcryptHasher()
 
 	userRepo := sqlite.NewUserRepository(db.Conn())
 	habitRepo := sqlite.NewHabitRepository(db.Conn())
 	entryRepo := sqlite.NewHabitEntryRepository(db.Conn())
+	refreshTokenRepo := sqlite.NewRefreshTokenRepository(db.Conn())
 
 	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher)
 	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
+	refreshTokenHandler := queries.NewRefreshTokenHandler(refreshTokenRepo, userRepo)
+	revokeTokenHandler := commands.NewRevokeTokenHandler(refreshTokenRepo)
+	revokeAllTokensHandler := commands.NewRevokeAllTokensHandler(refreshTokenRepo)
 	createHandler := commands.NewCreateHabitHandler(habitRepo)
 	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
 	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)
@@ -71,7 +81,7 @@ func main() {
 	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
 	unmarkHandler := commands.NewUnmarkHabitHandler(habitRepo, entryRepo)
 
-	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, jwtService)
+	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
 	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
 	statsHandlers := httpInfra.NewStatsHandlers(getHabitStatsHandler)
 	healthHandlers := httpInfra.NewHealthHandlers(db.Conn())
@@ -93,4 +103,33 @@ func parseJWTExpiry(expiry string) (int, error) {
 		return strconv.Atoi(hours)
 	}
 	return 0, fmt.Errorf("invalid format, expected format like '24h'")
+}
+
+func parseDuration(duration string) (time.Duration, error) {
+	duration = strings.TrimSpace(duration)
+	if strings.HasSuffix(duration, "m") {
+		minutes := strings.TrimSuffix(duration, "m")
+		mins, err := strconv.Atoi(minutes)
+		if err != nil {
+			return 0, fmt.Errorf("invalid minutes value: %w", err)
+		}
+		return time.Duration(mins) * time.Minute, nil
+	}
+	if strings.HasSuffix(duration, "h") {
+		hours := strings.TrimSuffix(duration, "h")
+		hrs, err := strconv.Atoi(hours)
+		if err != nil {
+			return 0, fmt.Errorf("invalid hours value: %w", err)
+		}
+		return time.Duration(hrs) * time.Hour, nil
+	}
+	if strings.HasSuffix(duration, "d") {
+		days := strings.TrimSuffix(duration, "d")
+		dys, err := strconv.Atoi(days)
+		if err != nil {
+			return 0, fmt.Errorf("invalid days value: %w", err)
+		}
+		return time.Duration(dys) * 24 * time.Hour, nil
+	}
+	return 0, fmt.Errorf("invalid format, expected format like '15m', '24h', or '7d'")
 }

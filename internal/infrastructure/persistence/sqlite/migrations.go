@@ -9,6 +9,7 @@ func RunMigrations(db *sql.DB) error {
 		createUsersTable,
 		createHabitsTable,
 		createHabitEntriesTable,
+		createRefreshTokensTable,
 		createIndexes,
 	}
 
@@ -62,9 +63,23 @@ CREATE TABLE IF NOT EXISTS habit_entries (
 );
 `
 
+const createRefreshTokensTable = `
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+	id TEXT PRIMARY KEY,
+	user_id TEXT NOT NULL,
+	token TEXT UNIQUE NOT NULL,
+	expires_at DATETIME NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	revoked_at DATETIME,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+`
+
 const createIndexes = `
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
 CREATE INDEX IF NOT EXISTS idx_habits_active ON habits(user_id, archived_at);
 CREATE INDEX IF NOT EXISTS idx_entries_habit ON habit_entries(habit_id);
 CREATE INDEX IF NOT EXISTS idx_entries_scheduled ON habit_entries(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 `

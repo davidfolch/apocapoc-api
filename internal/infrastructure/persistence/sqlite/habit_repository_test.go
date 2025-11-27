@@ -23,6 +23,7 @@ func TestHabitRepositoryCreate(t *testing.T) {
 		value_objects.HabitTypeBoolean,
 		value_objects.FrequencyDaily,
 		false,
+		false,
 	)
 	habit.Description = "Exercise every morning"
 
@@ -48,6 +49,7 @@ func TestHabitRepositoryCreateWithSpecificDays(t *testing.T) {
 		"Weekly Workout",
 		value_objects.HabitTypeBoolean,
 		value_objects.FrequencyWeekly,
+		false,
 		false,
 	)
 	habit.SpecificDays = []int{1, 3, 5}
@@ -80,6 +82,7 @@ func TestHabitRepositoryFindByID(t *testing.T) {
 		value_objects.HabitTypeCounter,
 		value_objects.FrequencyDaily,
 		true,
+		false,
 	)
 	targetValue := 30.0
 	habit.TargetValue = &targetValue
@@ -165,6 +168,7 @@ func TestHabitRepositoryUpdate(t *testing.T) {
 		value_objects.HabitTypeBoolean,
 		value_objects.FrequencyDaily,
 		false,
+		false,
 	)
 
 	err := repo.Create(ctx, habit)
@@ -210,6 +214,7 @@ func TestHabitRepositoryUpdateNotFound(t *testing.T) {
 		value_objects.HabitTypeBoolean,
 		value_objects.FrequencyDaily,
 		false,
+		false,
 	)
 	habit.ID = "non-existent"
 
@@ -231,6 +236,7 @@ func TestHabitRepositoryArchive(t *testing.T) {
 		"To Archive",
 		value_objects.HabitTypeBoolean,
 		value_objects.FrequencyDaily,
+		false,
 		false,
 	)
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
@@ -38,23 +39,32 @@ func setupTestServer(t *testing.T) *TestServer {
 	userRepo := sqlite.NewUserRepository(db)
 	habitRepo := sqlite.NewHabitRepository(db)
 	entryRepo := sqlite.NewHabitEntryRepository(db)
+	refreshTokenRepo := sqlite.NewRefreshTokenRepository(db)
 
 	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher)
 	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
+	refreshTokenHandler := queries.NewRefreshTokenHandler(refreshTokenRepo, userRepo)
+	revokeTokenHandler := commands.NewRevokeTokenHandler(refreshTokenRepo)
+	revokeAllTokensHandler := commands.NewRevokeAllTokensHandler(refreshTokenRepo)
 	createHandler := commands.NewCreateHabitHandler(habitRepo)
 	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
 	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)
 	getHabitByIDHandler := queries.NewGetHabitByIDHandler(habitRepo)
 	getHabitEntriesHandler := queries.NewGetHabitEntriesHandler(habitRepo, entryRepo)
+	getHabitStatsHandler := queries.NewGetHabitStatsHandler(habitRepo, entryRepo)
 	updateHandler := commands.NewUpdateHabitHandler(habitRepo)
 	archiveHandler := commands.NewArchiveHabitHandler(habitRepo)
 	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
 	unmarkHandler := commands.NewUnmarkHabitHandler(habitRepo, entryRepo)
 
-	authHandlers := NewAuthHandlers(registerHandler, loginHandler, jwtService)
-	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
+	refreshTokenExpiry := 7 * 24 * time.Hour
 
-	router := NewRouter("*", habitHandlers, authHandlers, jwtService)
+	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
+	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
+	statsHandlers := NewStatsHandlers(getHabitStatsHandler)
+	healthHandlers := NewHealthHandlers(db)
+
+	router := NewRouter("*", habitHandlers, authHandlers, statsHandlers, healthHandlers, jwtService)
 
 	handler := http.Handler(router)
 	return &TestServer{

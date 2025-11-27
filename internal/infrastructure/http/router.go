@@ -40,6 +40,8 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 		r.Use(httprate.LimitByIP(10, 1*time.Minute))
 		r.Post("/register", authHandlers.Register)
 		r.Post("/login", authHandlers.Login)
+		r.Post("/refresh", authHandlers.Refresh)
+		r.Post("/logout", authHandlers.Logout)
 	})
 
 	r.Route("/api/v1/habits", func(r chi.Router) {

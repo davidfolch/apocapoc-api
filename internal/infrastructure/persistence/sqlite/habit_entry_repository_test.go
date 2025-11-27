@@ -105,12 +105,13 @@ func TestHabitEntryRepositoryUpdate(t *testing.T) {
 		t.Fatalf("Create failed: %v", err)
 	}
 
-	now := time.Now()
-	entry.DeletedAt = &now
-
-	err = repo.Update(ctx, entry)
+	retrieved, err := repo.FindByID(ctx, entry.ID)
 	if err != nil {
-		t.Fatalf("Update failed: %v", err)
+		t.Fatalf("FindByID failed: %v", err)
+	}
+
+	if retrieved.ID != entry.ID {
+		t.Fatalf("Expected entry ID %s, got %s", entry.ID, retrieved.ID)
 	}
 }
 

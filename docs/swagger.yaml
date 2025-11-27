@@ -1,0 +1,795 @@
+basePath: /api/v1
+definitions:
+  http.AuthResponse:
+    properties:
+      refresh_token:
+        type: string
+      token:
+        type: string
+      user_id:
+        type: string
+    type: object
+  http.CreateHabitRequest:
+    properties:
+      carry_over:
+        type: boolean
+      description:
+        type: string
+      frequency:
+        $ref: '#/definitions/value_objects.Frequency'
+      is_negative:
+        type: boolean
+      name:
+        type: string
+      specific_dates:
+        items:
+          type: integer
+        type: array
+      specific_days:
+        items:
+          type: integer
+        type: array
+      target_value:
+        type: number
+      type:
+        $ref: '#/definitions/value_objects.HabitType'
+    type: object
+  http.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  http.HabitEntriesResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/http.HabitEntryResponse'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  http.HabitEntryResponse:
+    properties:
+      completed_at:
+        type: string
+      habit_id:
+        type: string
+      id:
+        type: string
+      scheduled_date:
+        type: string
+      value:
+        type: number
+    type: object
+  http.HealthResponse:
+    properties:
+      database:
+        type: string
+      status:
+        type: string
+      uptime:
+        type: string
+    type: object
+  http.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  http.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  http.MarkHabitRequest:
+    properties:
+      scheduled_date:
+        type: string
+      value:
+        type: number
+    type: object
+  http.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  http.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      timezone:
+        type: string
+    type: object
+  http.TodaysHabitResponse:
+    properties:
+      id:
+        type: string
+      is_carried_over:
+        type: boolean
+      is_negative:
+        type: boolean
+      name:
+        type: string
+      scheduled_date:
+        type: string
+      target_value:
+        type: number
+      type:
+        $ref: '#/definitions/value_objects.HabitType'
+    type: object
+  http.UpdateHabitRequest:
+    properties:
+      carry_over:
+        type: boolean
+      description:
+        type: string
+      name:
+        type: string
+      specific_dates:
+        items:
+          type: integer
+        type: array
+      specific_days:
+        items:
+          type: integer
+        type: array
+      target_value:
+        type: number
+    type: object
+  http.UserHabitResponse:
+    properties:
+      carry_over:
+        type: boolean
+      frequency:
+        $ref: '#/definitions/value_objects.Frequency'
+      id:
+        type: string
+      is_negative:
+        type: boolean
+      name:
+        type: string
+      specific_days:
+        items:
+          type: integer
+        type: array
+      target_value:
+        type: number
+      type:
+        $ref: '#/definitions/value_objects.HabitType'
+    type: object
+  queries.HabitStatsDTO:
+    properties:
+      completion_rate:
+        type: number
+      completions_this_month:
+        type: integer
+      completions_this_week:
+        type: integer
+      current_streak:
+        type: integer
+      habit_id:
+        type: string
+      habit_name:
+        type: string
+      longest_streak:
+        type: integer
+      total_completions:
+        type: integer
+    type: object
+  value_objects.Frequency:
+    enum:
+    - DAILY
+    - WEEKLY
+    - MONTHLY
+    type: string
+    x-enum-varnames:
+    - FrequencyDaily
+    - FrequencyWeekly
+    - FrequencyMonthly
+  value_objects.HabitType:
+    enum:
+    - BOOLEAN
+    - COUNTER
+    - VALUE
+    type: string
+    x-enum-varnames:
+    - HabitTypeBoolean
+    - HabitTypeCounter
+    - HabitTypeValue
+info:
+  contact:
+    name: API Support
+    url: https://github.com/davidfolch/apocapoc-api
+  description: Self-hosted habit tracking service
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Apocapoc API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password. Returns both access
+        token and refresh token. The access token is used for API requests, the refresh
+        token is used to obtain new access tokens when they expire.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns access token, refresh token, and user ID
+          schema:
+            $ref: '#/definitions/http.AuthResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Invalid email or password
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Login user
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revoke the refresh token to invalidate the user session. After
+        logout, the refresh token cannot be used to obtain new access tokens. The
+        user will need to login again. Always call this endpoint before clearing tokens
+        from client storage to ensure proper session termination.
+      parameters:
+      - description: Refresh token to revoke
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully logged out - the refresh token is now invalid
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request body or missing refresh token
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Refresh token not found (already revoked or never existed)
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Logout user
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 'Exchange a valid refresh token for a new access token and refresh
+        token pair. IMPORTANT: The old refresh token is automatically revoked and
+        you receive a NEW refresh token - always update both tokens in storage. Use
+        this endpoint when the access token expires to maintain the user session without
+        requiring re-login.'
+      parameters:
+      - description: Current refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns NEW access token and NEW refresh token - the old refresh
+            token is now invalid
+          schema:
+            $ref: '#/definitions/http.AuthResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account and receive both access token and refresh
+        token. Store both tokens securely - the refresh token is used to obtain new
+        access tokens when they expire.
+      parameters:
+      - description: 'Registration data (password requires: min 8 chars, uppercase,
+          lowercase, digit, special char)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns access token, refresh token, and user ID
+          schema:
+            $ref: '#/definitions/http.AuthResponse'
+        "400":
+          description: 'Invalid input: email format, password requirements, or timezone'
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "409":
+          description: Email already registered
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /habits:
+    get:
+      description: Get all active habits for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.UserHabitResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all user habits
+      tags:
+      - habits
+    post:
+      consumes:
+      - application/json
+      description: Create a new habit for the authenticated user
+      parameters:
+      - description: Habit data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateHabitRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new habit
+      tags:
+      - habits
+  /habits/{id}:
+    delete:
+      description: Archive (soft delete) a habit
+      parameters:
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive habit
+      tags:
+      - habits
+    get:
+      description: Get a specific habit by ID
+      parameters:
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.UserHabitResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get habit by ID
+      tags:
+      - habits
+    put:
+      consumes:
+      - application/json
+      description: Update an existing habit
+      parameters:
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.UpdateHabitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update habit
+      tags:
+      - habits
+  /habits/{id}/entries:
+    get:
+      description: Get entries (completion history) for a habit with optional date
+        filtering and pagination
+      parameters:
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: from
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: to
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size (max 100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HabitEntriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get habit entries
+      tags:
+      - habits
+  /habits/{id}/entries/{date}:
+    delete:
+      description: Delete a habit entry (unmark completion)
+      parameters:
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Date (YYYY-MM-DD)
+        in: path
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unmark habit
+      tags:
+      - habits
+  /habits/{id}/mark:
+    post:
+      consumes:
+      - application/json
+      description: Mark a habit as completed for a specific date
+      parameters:
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Mark data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.MarkHabitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark habit as complete
+      tags:
+      - habits
+  /habits/today:
+    get:
+      description: Get all habits scheduled for today for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.TodaysHabitResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get today's habits
+      tags:
+      - habits
+  /health:
+    get:
+      description: Get API health status including database connectivity and uptime
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/http.HealthResponse'
+      summary: Health check
+      tags:
+      - system
+  /stats/habits/{id}:
+    get:
+      description: Get statistics for a specific habit including streaks and completion
+        rates
+      parameters:
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/queries.HabitStatsDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get habit statistics
+      tags:
+      - stats
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
