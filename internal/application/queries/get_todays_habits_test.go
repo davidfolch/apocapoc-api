@@ -76,7 +76,7 @@ func (m *mockEntryRepo) Delete(ctx context.Context, id string) error {
 }
 
 func TestGetTodaysHabitsHandler_DailyHabitNoEntries(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepo{habits: []*entities.Habit{habit}}
@@ -110,7 +110,7 @@ func TestGetTodaysHabitsHandler_DailyHabitNoEntries(t *testing.T) {
 }
 
 func TestGetTodaysHabitsHandler_DailyHabitAlreadyCompleted(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	targetDate := time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC)
@@ -139,7 +139,7 @@ func TestGetTodaysHabitsHandler_DailyHabitAlreadyCompleted(t *testing.T) {
 }
 
 func TestGetTodaysHabitsHandler_WeeklyHabitOnCorrectDay(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Gym", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false)
+	habit := entities.NewHabit("user-123", "Gym", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false, false)
 	habit.ID = "habit-1"
 	habit.SpecificDays = []int{1, 3, 5}
 
@@ -168,7 +168,7 @@ func TestGetTodaysHabitsHandler_WeeklyHabitOnCorrectDay(t *testing.T) {
 }
 
 func TestGetTodaysHabitsHandler_WeeklyHabitOnWrongDay(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Gym", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false)
+	habit := entities.NewHabit("user-123", "Gym", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false, false)
 	habit.ID = "habit-1"
 	habit.SpecificDays = []int{1, 3, 5}
 
@@ -197,7 +197,7 @@ func TestGetTodaysHabitsHandler_WeeklyHabitOnWrongDay(t *testing.T) {
 }
 
 func TestGetTodaysHabitsHandler_CarryOverEnabled(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Gym", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, true)
+	habit := entities.NewHabit("user-123", "Gym", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, true, false)
 	habit.ID = "habit-1"
 	habit.SpecificDays = []int{1}
 
@@ -230,7 +230,7 @@ func TestGetTodaysHabitsHandler_CarryOverEnabled(t *testing.T) {
 }
 
 func TestGetTodaysHabitsHandler_CarryOverDisabled(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Gym", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false)
+	habit := entities.NewHabit("user-123", "Gym", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false, false)
 	habit.ID = "habit-1"
 	habit.SpecificDays = []int{1}
 

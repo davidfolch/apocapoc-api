@@ -9,10 +9,10 @@ import (
 )
 
 func TestGetUserHabitsHandler_ReturnsAllActiveHabits(t *testing.T) {
-	habit1 := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit1 := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit1.ID = "habit-1"
 
-	habit2 := entities.NewHabit("user-123", "Read", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false)
+	habit2 := entities.NewHabit("user-123", "Read", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false, false)
 	habit2.ID = "habit-2"
 
 	habitRepo := &mockHabitRepo{habits: []*entities.Habit{habit1, habit2}}
@@ -64,7 +64,7 @@ func TestGetUserHabitsHandler_ReturnsEmptyListForUserWithNoHabits(t *testing.T) 
 
 func TestGetUserHabitsHandler_IncludesAllHabitFields(t *testing.T) {
 	targetValue := 5.0
-	habit := entities.NewHabit("user-123", "Drink Water", value_objects.HabitTypeValue, value_objects.FrequencyDaily, true)
+	habit := entities.NewHabit("user-123", "Drink Water", value_objects.HabitTypeValue, value_objects.FrequencyDaily, true, false)
 	habit.ID = "habit-1"
 	habit.TargetValue = &targetValue
 

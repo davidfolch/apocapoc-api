@@ -14,6 +14,7 @@ type CreateHabitRequest struct {
 	SpecificDays  []int                    `json:"specific_days,omitempty"`
 	SpecificDates []int                    `json:"specific_dates,omitempty"`
 	CarryOver     bool                     `json:"carry_over"`
+	IsNegative    bool                     `json:"is_negative"`
 	TargetValue   *float64                 `json:"target_value,omitempty"`
 }
 
@@ -36,6 +37,7 @@ type HabitResponse struct {
 	SpecificDays  []int                    `json:"specific_days,omitempty"`
 	SpecificDates []int                    `json:"specific_dates,omitempty"`
 	CarryOver     bool                     `json:"carry_over"`
+	IsNegative    bool                     `json:"is_negative"`
 	TargetValue   *float64                 `json:"target_value,omitempty"`
 	CreatedAt     time.Time                `json:"created_at"`
 	ArchivedAt    *time.Time               `json:"archived_at,omitempty"`
@@ -51,6 +53,7 @@ type TodaysHabitResponse struct {
 	Name          string                  `json:"name"`
 	Type          value_objects.HabitType `json:"type"`
 	TargetValue   *float64                `json:"target_value,omitempty"`
+	IsNegative    bool                    `json:"is_negative"`
 	ScheduledDate time.Time               `json:"scheduled_date"`
 	IsCarriedOver bool                    `json:"is_carried_over"`
 }
@@ -63,6 +66,7 @@ type UserHabitResponse struct {
 	SpecificDays []int                    `json:"specific_days,omitempty"`
 	TargetValue  *float64                 `json:"target_value,omitempty"`
 	CarryOver    bool                     `json:"carry_over"`
+	IsNegative   bool                     `json:"is_negative"`
 }
 
 type HabitEntryResponse struct {

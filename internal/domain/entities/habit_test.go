@@ -13,8 +13,9 @@ func TestNewHabit(t *testing.T) {
 	habitType := value_objects.HabitTypeBoolean
 	frequency := value_objects.FrequencyDaily
 	carryOver := false
+	isNegative := false
 
-	habit := NewHabit(userID, name, habitType, frequency, carryOver)
+	habit := NewHabit(userID, name, habitType, frequency, carryOver, isNegative)
 
 	if habit.UserID != userID {
 		t.Errorf("Expected UserID %s, got %s", userID, habit.UserID)
@@ -46,7 +47,7 @@ func TestNewHabit(t *testing.T) {
 }
 
 func TestHabit_Archive(t *testing.T) {
-	habit := NewHabit("user-123", "Test Habit", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := NewHabit("user-123", "Test Habit", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 
 	if habit.ArchivedAt != nil {
 		t.Error("New habit should not be archived")
@@ -64,7 +65,7 @@ func TestHabit_Archive(t *testing.T) {
 }
 
 func TestHabit_IsActive(t *testing.T) {
-	habit := NewHabit("user-123", "Test Habit", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := NewHabit("user-123", "Test Habit", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 
 	if !habit.IsActive() {
 		t.Error("New habit should be active")
@@ -78,7 +79,7 @@ func TestHabit_IsActive(t *testing.T) {
 }
 
 func TestHabit_WithSpecificDays(t *testing.T) {
-	habit := NewHabit("user-123", "Workout", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false)
+	habit := NewHabit("user-123", "Workout", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false, false)
 	habit.SpecificDays = []int{1, 3, 5} // Monday, Wednesday, Friday
 
 	if len(habit.SpecificDays) != 3 {
@@ -91,7 +92,7 @@ func TestHabit_WithSpecificDays(t *testing.T) {
 }
 
 func TestHabit_WithTargetValue(t *testing.T) {
-	habit := NewHabit("user-123", "Drink Water", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false)
+	habit := NewHabit("user-123", "Drink Water", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
 	targetValue := 8.0
 	habit.TargetValue = &targetValue
 

@@ -18,6 +18,7 @@ type CreateHabitCommand struct {
 	SpecificDays  []int
 	SpecificDates []int
 	CarryOver     bool
+	IsNegative    bool
 	TargetValue   *float64
 }
 
@@ -46,7 +47,7 @@ func (h *CreateHabitHandler) Handle(ctx context.Context, cmd CreateHabitCommand)
 		return "", errors.ErrInvalidInput
 	}
 
-	habit := entities.NewHabit(cmd.UserID, cmd.Name, cmd.Type, cmd.Frequency, cmd.CarryOver)
+	habit := entities.NewHabit(cmd.UserID, cmd.Name, cmd.Type, cmd.Frequency, cmd.CarryOver, cmd.IsNegative)
 	habit.Description = cmd.Description
 	habit.SpecificDays = cmd.SpecificDays
 	habit.SpecificDates = cmd.SpecificDates

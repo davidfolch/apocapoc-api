@@ -14,6 +14,7 @@ type TodaysHabitDTO struct {
 	Name          string
 	Type          value_objects.HabitType
 	TargetValue   *float64
+	IsNegative    bool
 	ScheduledDate time.Time
 	IsCarriedOver bool
 }
@@ -83,6 +84,7 @@ func (h *GetTodaysHabitsHandler) Handle(
 				Name:          habit.Name,
 				Type:          habit.Type,
 				TargetValue:   habit.TargetValue,
+				IsNegative:    habit.IsNegative,
 				ScheduledDate: query.Date,
 				IsCarriedOver: !shouldAppear && habit.CarryOver,
 			})

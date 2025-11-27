@@ -16,6 +16,7 @@ type Habit struct {
 	SpecificDays  []int
 	SpecificDates []int
 	CarryOver     bool
+	IsNegative    bool
 	TargetValue   *float64
 	CreatedAt     time.Time
 	ArchivedAt    *time.Time
@@ -27,14 +28,16 @@ func NewHabit(
 	habitType value_objects.HabitType,
 	frequency value_objects.Frequency,
 	carryOver bool,
+	isNegative bool,
 ) *Habit {
 	return &Habit{
-		UserID:    userID,
-		Name:      name,
-		Type:      habitType,
-		Frequency: frequency,
-		CarryOver: carryOver,
-		CreatedAt: time.Now(),
+		UserID:     userID,
+		Name:       name,
+		Type:       habitType,
+		Frequency:  frequency,
+		CarryOver:  carryOver,
+		IsNegative: isNegative,
+		CreatedAt:  time.Now(),
 	}
 }
 

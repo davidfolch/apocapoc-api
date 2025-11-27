@@ -29,8 +29,8 @@ func (r *HabitRepository) Create(ctx context.Context, habit *entities.Habit) err
 	query := `
 		INSERT INTO habits (
 			id, user_id, name, description, type, frequency,
-			specific_days, specific_dates, carry_over, target_value, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			specific_days, specific_dates, carry_over, is_negative, target_value, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	_, err := r.db.ExecContext(ctx, query,
@@ -43,6 +43,7 @@ func (r *HabitRepository) Create(ctx context.Context, habit *entities.Habit) err
 		specificDays,
 		specificDates,
 		habit.CarryOver,
+		habit.IsNegative,
 		habit.TargetValue,
 		habit.CreatedAt,
 	)
@@ -57,7 +58,7 @@ func (r *HabitRepository) Create(ctx context.Context, habit *entities.Habit) err
 func (r *HabitRepository) FindByID(ctx context.Context, id string) (*entities.Habit, error) {
 	query := `
 		SELECT id, user_id, name, description, type, frequency,
-			   specific_days, specific_dates, carry_over, target_value,
+			   specific_days, specific_dates, carry_over, is_negative, target_value,
 			   created_at, archived_at
 		FROM habits
 		WHERE id = ?
@@ -80,6 +81,7 @@ func (r *HabitRepository) FindByID(ctx context.Context, id string) (*entities.Ha
 		&specificDays,
 		&specificDates,
 		&habit.CarryOver,
+		&habit.IsNegative,
 		&habit.TargetValue,
 		&habit.CreatedAt,
 		&archivedAt,
@@ -108,7 +110,7 @@ func (r *HabitRepository) FindByID(ctx context.Context, id string) (*entities.Ha
 func (r *HabitRepository) FindActiveByUserID(ctx context.Context, userID string) ([]*entities.Habit, error) {
 	query := `
 		SELECT id, user_id, name, description, type, frequency,
-			   specific_days, specific_dates, carry_over, target_value,
+			   specific_days, specific_dates, carry_over, is_negative, target_value,
 			   created_at, archived_at
 		FROM habits
 		WHERE user_id = ? AND archived_at IS NULL
@@ -131,7 +133,7 @@ func (r *HabitRepository) Update(ctx context.Context, habit *entities.Habit) err
 	query := `
 		UPDATE habits
 		SET name = ?, description = ?, type = ?, frequency = ?,
-			specific_days = ?, specific_dates = ?, carry_over = ?,
+			specific_days = ?, specific_dates = ?, carry_over = ?, is_negative = ?,
 			target_value = ?, archived_at = ?
 		WHERE id = ?
 	`
@@ -144,6 +146,7 @@ func (r *HabitRepository) Update(ctx context.Context, habit *entities.Habit) err
 		specificDays,
 		specificDates,
 		habit.CarryOver,
+		habit.IsNegative,
 		habit.TargetValue,
 		habit.ArchivedAt,
 		habit.ID,
@@ -182,6 +185,7 @@ func (r *HabitRepository) scanHabits(rows *sql.Rows) ([]*entities.Habit, error) 
 			&specificDays,
 			&specificDates,
 			&habit.CarryOver,
+			&habit.IsNegative,
 			&habit.TargetValue,
 			&habit.CreatedAt,
 			&archivedAt,
@@ -210,7 +214,7 @@ func (r *HabitRepository) scanHabits(rows *sql.Rows) ([]*entities.Habit, error) 
 func (r *HabitRepository) FindByUserID(ctx context.Context, userID string) ([]*entities.Habit, error) {
 	query := `
 		SELECT id, user_id, name, description, type, frequency,
-			   specific_days, specific_dates, carry_over, target_value,
+			   specific_days, specific_dates, carry_over, is_negative, target_value,
 			   created_at, archived_at
 		FROM habits
 		WHERE user_id = ?

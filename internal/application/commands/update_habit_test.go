@@ -33,7 +33,7 @@ func (m *mockHabitRepoForUpdate) Update(ctx context.Context, habit *entities.Hab
 }
 
 func TestUpdateHabitHandler_UpdatesSuccessfully(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForUpdate{
@@ -101,7 +101,7 @@ func TestUpdateHabitHandler_ReturnsErrorWhenHabitNotFound(t *testing.T) {
 }
 
 func TestUpdateHabitHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForUpdate{
@@ -124,7 +124,7 @@ func TestUpdateHabitHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T) {
 }
 
 func TestUpdateHabitHandler_CannotUpdateArchivedHabit(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 	habit.Archive()
 
@@ -148,7 +148,7 @@ func TestUpdateHabitHandler_CannotUpdateArchivedHabit(t *testing.T) {
 }
 
 func TestUpdateHabitHandler_ValidatesInput(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForUpdate{

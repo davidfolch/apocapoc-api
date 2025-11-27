@@ -24,7 +24,7 @@ func (m *mockHabitRepoWithFindByID) FindByID(ctx context.Context, id string) (*e
 
 func TestGetHabitByIDHandler_ReturnsHabitSuccessfully(t *testing.T) {
 	targetValue := 5.0
-	habit := entities.NewHabit("user-123", "Drink Water", value_objects.HabitTypeValue, value_objects.FrequencyDaily, true)
+	habit := entities.NewHabit("user-123", "Drink Water", value_objects.HabitTypeValue, value_objects.FrequencyDaily, true, false)
 	habit.ID = "habit-1"
 	habit.TargetValue = &targetValue
 
@@ -82,7 +82,7 @@ func TestGetHabitByIDHandler_ReturnsErrorWhenHabitNotFound(t *testing.T) {
 }
 
 func TestGetHabitByIDHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoWithFindByID{

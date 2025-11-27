@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS habits (
 	specific_days TEXT,
 	specific_dates TEXT,
 	carry_over BOOLEAN DEFAULT 0,
+	is_negative BOOLEAN DEFAULT 0,
 	target_value REAL,
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	archived_at DATETIME,

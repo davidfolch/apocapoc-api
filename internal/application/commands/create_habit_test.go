@@ -195,3 +195,37 @@ func TestCreateHabitHandler_MonthlyWithSpecificDates(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 }
+
+func TestCreateHabitHandler_NegativeHabit(t *testing.T) {
+	mock := &mockHabitRepo{
+		createFunc: func(ctx context.Context, habit *entities.Habit) error {
+			habit.ID = "habit-123"
+			if !habit.IsNegative {
+				t.Error("Expected IsNegative to be true")
+			}
+			return nil
+		},
+	}
+
+	handler := NewCreateHabitHandler(mock)
+
+	cmd := CreateHabitCommand{
+		UserID:      "user-123",
+		Name:        "Eat Candy",
+		Description: "Track bad habit",
+		Type:        "COUNTER",
+		Frequency:   "DAILY",
+		CarryOver:   false,
+		IsNegative:  true,
+	}
+
+	habitID, err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if habitID == "" {
+		t.Error("Expected habit ID to be returned")
+	}
+}

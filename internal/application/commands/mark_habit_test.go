@@ -11,7 +11,9 @@ import (
 )
 
 type mockEntryRepo struct {
-	createFunc func(ctx context.Context, entry *entities.HabitEntry) error
+	createFunc               func(ctx context.Context, entry *entities.HabitEntry) error
+	findByDateRangeFunc      func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error)
+	updateFunc               func(ctx context.Context, entry *entities.HabitEntry) error
 }
 
 func (m *mockEntryRepo) Create(ctx context.Context, entry *entities.HabitEntry) error {
@@ -30,6 +32,9 @@ func (m *mockEntryRepo) FindByHabitID(ctx context.Context, habitID string) ([]*e
 }
 
 func (m *mockEntryRepo) FindByHabitIDAndDateRange(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+	if m.findByDateRangeFunc != nil {
+		return m.findByDateRangeFunc(ctx, habitID, from, to)
+	}
 	return nil, nil
 }
 
@@ -38,6 +43,9 @@ func (m *mockEntryRepo) FindPendingByHabitID(ctx context.Context, habitID string
 }
 
 func (m *mockEntryRepo) Update(ctx context.Context, entry *entities.HabitEntry) error {
+	if m.updateFunc != nil {
+		return m.updateFunc(ctx, entry)
+	}
 	return nil
 }
 
@@ -74,7 +82,7 @@ func (m *mockHabitRepoForMark) Delete(ctx context.Context, id string) error {
 }
 
 func TestMarkHabitHandler_Success(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForMark{habit: habit}
@@ -122,7 +130,7 @@ func TestMarkHabitHandler_HabitNotFound(t *testing.T) {
 }
 
 func TestMarkHabitHandler_ArchivedHabit(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 	habit.Archive()
 
@@ -144,7 +152,7 @@ func TestMarkHabitHandler_ArchivedHabit(t *testing.T) {
 }
 
 func TestMarkHabitHandler_WithValue(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Steps", value_objects.HabitTypeValue, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Steps", value_objects.HabitTypeValue, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForMark{habit: habit}
@@ -179,7 +187,7 @@ func TestMarkHabitHandler_WithValue(t *testing.T) {
 }
 
 func TestMarkHabitHandler_DuplicateEntry(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForMark{habit: habit}
@@ -202,3 +210,332 @@ func TestMarkHabitHandler_DuplicateEntry(t *testing.T) {
 		t.Errorf("Expected ErrAlreadyExists, got %v", err)
 	}
 }
+
+func TestMarkHabitHandler_CounterOnlyAcceptsIntegers(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water Glasses", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+	entryRepo := &mockEntryRepo{}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	decimalValue := 2.5
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &decimalValue,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != errors.ErrInvalidInput {
+		t.Errorf("Expected ErrInvalidInput for decimal value on COUNTER, got %v", err)
+	}
+}
+
+func TestMarkHabitHandler_CounterAcceptsIntegers(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water Glasses", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+	entryRepo := &mockEntryRepo{
+		createFunc: func(ctx context.Context, entry *entities.HabitEntry) error {
+			if entry.Value == nil || *entry.Value != 3.0 {
+				t.Errorf("Expected value 3.0, got %v", entry.Value)
+			}
+			return nil
+		},
+	}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	intValue := 3.0
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &intValue,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestMarkHabitHandler_CounterAutoIncrementFirstMark(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water Glasses", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+	entryRepo := &mockEntryRepo{
+		findByDateRangeFunc: func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+			return []*entities.HabitEntry{}, nil
+		},
+		createFunc: func(ctx context.Context, entry *entities.HabitEntry) error {
+			if entry.Value == nil || *entry.Value != 1.0 {
+				t.Errorf("Expected default value 1.0, got %v", entry.Value)
+			}
+			return nil
+		},
+	}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         nil,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestMarkHabitHandler_CounterAutoIncrementSubsequentMarks(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water Glasses", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+
+	existingValue := 3.0
+	existingEntry := &entities.HabitEntry{
+		ID:            "entry-1",
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &existingValue,
+	}
+
+	entryRepo := &mockEntryRepo{
+		findByDateRangeFunc: func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+			return []*entities.HabitEntry{existingEntry}, nil
+		},
+		updateFunc: func(ctx context.Context, entry *entities.HabitEntry) error {
+			if entry.Value == nil || *entry.Value != 4.0 {
+				t.Errorf("Expected value 4.0, got %v", entry.Value)
+			}
+			return nil
+		},
+	}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         nil,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestMarkHabitHandler_CounterAutoIncrementWithCustomValue(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water Glasses", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+
+	existingValue := 3.0
+	existingEntry := &entities.HabitEntry{
+		ID:            "entry-1",
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &existingValue,
+	}
+
+	entryRepo := &mockEntryRepo{
+		findByDateRangeFunc: func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+			return []*entities.HabitEntry{existingEntry}, nil
+		},
+		updateFunc: func(ctx context.Context, entry *entities.HabitEntry) error {
+			if entry.Value == nil || *entry.Value != 5.0 {
+				t.Errorf("Expected value 5.0 (3+2), got %v", entry.Value)
+			}
+			return nil
+		},
+	}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	increment := 2.0
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &increment,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestMarkHabitHandler_CounterCanDecrement(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Cigarettes", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+
+	existingValue := 5.0
+	existingEntry := &entities.HabitEntry{
+		ID:            "entry-1",
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &existingValue,
+	}
+
+	entryRepo := &mockEntryRepo{
+		findByDateRangeFunc: func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+			return []*entities.HabitEntry{existingEntry}, nil
+		},
+		updateFunc: func(ctx context.Context, entry *entities.HabitEntry) error {
+			if entry.Value == nil || *entry.Value != 3.0 {
+				t.Errorf("Expected value 3.0 (5-2), got %v", entry.Value)
+			}
+			return nil
+		},
+	}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	decrement := -2.0
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &decrement,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestMarkHabitHandler_CounterMinimumZero(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water Glasses", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+
+	existingValue := 2.0
+	existingEntry := &entities.HabitEntry{
+		ID:            "entry-1",
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &existingValue,
+	}
+
+	entryRepo := &mockEntryRepo{
+		findByDateRangeFunc: func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+			return []*entities.HabitEntry{existingEntry}, nil
+		},
+		updateFunc: func(ctx context.Context, entry *entities.HabitEntry) error {
+			if entry.Value == nil || *entry.Value != 0.0 {
+				t.Errorf("Expected value 0.0 (2-3 clamped to 0), got %v", entry.Value)
+			}
+			return nil
+		},
+	}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	decrement := -3.0
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &decrement,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestMarkHabitHandler_CounterStaysAtZero(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water Glasses", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+
+	existingValue := 0.0
+	existingEntry := &entities.HabitEntry{
+		ID:            "entry-1",
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &existingValue,
+	}
+
+	entryRepo := &mockEntryRepo{
+		findByDateRangeFunc: func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+			return []*entities.HabitEntry{existingEntry}, nil
+		},
+		updateFunc: func(ctx context.Context, entry *entities.HabitEntry) error {
+			if entry.Value == nil || *entry.Value != 0.0 {
+				t.Errorf("Expected value to stay at 0.0, got %v", entry.Value)
+			}
+			return nil
+		},
+	}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	decrement := -1.0
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &decrement,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestMarkHabitHandler_CounterFirstMarkWithNegative(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water Glasses", value_objects.HabitTypeCounter, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+
+	habitRepo := &mockHabitRepoForMark{habit: habit}
+	entryRepo := &mockEntryRepo{
+		findByDateRangeFunc: func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error) {
+			return []*entities.HabitEntry{}, nil
+		},
+		createFunc: func(ctx context.Context, entry *entities.HabitEntry) error {
+			if entry.Value == nil || *entry.Value != 0.0 {
+				t.Errorf("Expected value 0.0 (negative clamped), got %v", entry.Value)
+			}
+			return nil
+		},
+	}
+
+	handler := NewMarkHabitHandler(entryRepo, habitRepo)
+
+	negativeValue := -5.0
+	cmd := MarkHabitCommand{
+		HabitID:       "habit-1",
+		ScheduledDate: time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC),
+		Value:         &negativeValue,
+	}
+
+	err := handler.Handle(context.Background(), cmd)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+

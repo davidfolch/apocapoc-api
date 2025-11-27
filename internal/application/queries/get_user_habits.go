@@ -14,6 +14,7 @@ type HabitDTO struct {
 	Frequency    value_objects.Frequency
 	TargetValue  *float64
 	CarryOver    bool
+	IsNegative   bool
 	SpecificDays []int
 }
 
@@ -46,6 +47,7 @@ func (h *GetUserHabitsHandler) Handle(ctx context.Context, query GetUserHabitsQu
 			Frequency:    habit.Frequency,
 			TargetValue:  habit.TargetValue,
 			CarryOver:    habit.CarryOver,
+			IsNegative:   habit.IsNegative,
 			SpecificDays: habit.SpecificDays,
 		})
 	}

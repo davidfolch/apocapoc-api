@@ -30,7 +30,7 @@ func (m *mockEntryRepoForUnmark) Delete(ctx context.Context, id string) error {
 }
 
 func TestUnmarkHabitHandler_UnmarksSuccessfully(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	scheduledDate := time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC)
@@ -87,7 +87,7 @@ func TestUnmarkHabitHandler_ReturnsErrorWhenHabitNotFound(t *testing.T) {
 }
 
 func TestUnmarkHabitHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForUpdate{
@@ -112,7 +112,7 @@ func TestUnmarkHabitHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T) {
 }
 
 func TestUnmarkHabitHandler_ReturnsErrorWhenEntryNotFound(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForUpdate{

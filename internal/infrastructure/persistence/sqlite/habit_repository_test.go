@@ -130,9 +130,9 @@ func TestHabitRepositoryFindActiveByUserID(t *testing.T) {
 
 	userID := "user-789"
 
-	habit1 := entities.NewHabit(userID, "Habit 1", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
-	habit2 := entities.NewHabit(userID, "Habit 2", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
-	habit3 := entities.NewHabit(userID, "Habit 3", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit1 := entities.NewHabit(userID, "Habit 1", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
+	habit2 := entities.NewHabit(userID, "Habit 2", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
+	habit3 := entities.NewHabit(userID, "Habit 3", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 
 	repo.Create(ctx, habit1)
 	repo.Create(ctx, habit2)

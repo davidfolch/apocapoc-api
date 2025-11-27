@@ -10,7 +10,7 @@ import (
 )
 
 func TestArchiveHabitHandler_ArchivesSuccessfully(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForUpdate{
@@ -59,7 +59,7 @@ func TestArchiveHabitHandler_ReturnsErrorWhenHabitNotFound(t *testing.T) {
 }
 
 func TestArchiveHabitHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoForUpdate{
@@ -81,7 +81,7 @@ func TestArchiveHabitHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T) {
 }
 
 func TestArchiveHabitHandler_CanArchiveAlreadyArchivedHabit(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 	habit.Archive()
 

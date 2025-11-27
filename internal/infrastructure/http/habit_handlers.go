@@ -84,6 +84,7 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 		SpecificDays:  req.SpecificDays,
 		SpecificDates: req.SpecificDates,
 		CarryOver:     req.CarryOver,
+		IsNegative:    req.IsNegative,
 		TargetValue:   req.TargetValue,
 	}
 
@@ -137,6 +138,7 @@ func (h *HabitHandlers) GetUserHabits(w http.ResponseWriter, r *http.Request) {
 			SpecificDays: habit.SpecificDays,
 			TargetValue:  habit.TargetValue,
 			CarryOver:    habit.CarryOver,
+			IsNegative:   habit.IsNegative,
 		}
 	}
 
@@ -192,6 +194,7 @@ func (h *HabitHandlers) GetHabitByID(w http.ResponseWriter, r *http.Request) {
 		SpecificDays: habit.SpecificDays,
 		TargetValue:  habit.TargetValue,
 		CarryOver:    habit.CarryOver,
+		IsNegative:   habit.IsNegative,
 	}
 
 	respondJSON(w, http.StatusOK, response)
@@ -464,6 +467,7 @@ func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) 
 			Name:          habit.Name,
 			Type:          habit.Type,
 			TargetValue:   habit.TargetValue,
+			IsNegative:    habit.IsNegative,
 			ScheduledDate: habit.ScheduledDate,
 			IsCarriedOver: habit.IsCarriedOver,
 		}

@@ -39,6 +39,7 @@ func (h *GetHabitByIDHandler) Handle(ctx context.Context, query GetHabitByIDQuer
 		Frequency:    habit.Frequency,
 		TargetValue:  habit.TargetValue,
 		CarryOver:    habit.CarryOver,
+		IsNegative:   habit.IsNegative,
 		SpecificDays: habit.SpecificDays,
 	}, nil
 }

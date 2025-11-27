@@ -25,7 +25,7 @@ func (m *mockEntryRepoWithFindByHabitID) FindByHabitIDAndDateRange(ctx context.C
 }
 
 func TestGetHabitEntriesHandler_ReturnsEntriesSuccessfully(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	date1 := time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC)
@@ -101,7 +101,7 @@ func TestGetHabitEntriesHandler_ReturnsErrorWhenHabitNotFound(t *testing.T) {
 }
 
 func TestGetHabitEntriesHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoWithFindByID{
@@ -127,7 +127,7 @@ func TestGetHabitEntriesHandler_ReturnsErrorWhenUserDoesNotOwnHabit(t *testing.T
 }
 
 func TestGetHabitEntriesHandler_WithPagination(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	entries := make([]*entities.HabitEntry, 10)
@@ -179,7 +179,7 @@ func TestGetHabitEntriesHandler_WithPagination(t *testing.T) {
 }
 
 func TestGetHabitEntriesHandler_RequiresPaginationWithoutDateRange(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	habitRepo := &mockHabitRepoWithFindByID{
@@ -207,7 +207,7 @@ func TestGetHabitEntriesHandler_RequiresPaginationWithoutDateRange(t *testing.T)
 }
 
 func TestGetHabitEntriesHandler_AllowsNoPaginationWithShortDateRange(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	from := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -247,7 +247,7 @@ func TestGetHabitEntriesHandler_AllowsNoPaginationWithShortDateRange(t *testing.
 }
 
 func TestGetHabitEntriesHandler_RequiresPaginationWithLongDateRange(t *testing.T) {
-	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false)
+	habit := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
 	habit.ID = "habit-1"
 
 	from := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
