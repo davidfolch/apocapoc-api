@@ -13,14 +13,14 @@ import (
 )
 
 type AuthHandlers struct {
-	registerHandler         *commands.RegisterUserHandler
-	loginHandler            *queries.LoginUserHandler
-	refreshTokenHandler     *queries.RefreshTokenHandler
-	revokeTokenHandler      *commands.RevokeTokenHandler
-	revokeAllTokensHandler  *commands.RevokeAllTokensHandler
-	jwtService              *auth.JWTService
-	refreshTokenRepo        repositories.RefreshTokenRepository
-	refreshTokenExpiry      time.Duration
+	registerHandler        *commands.RegisterUserHandler
+	loginHandler           *queries.LoginUserHandler
+	refreshTokenHandler    *queries.RefreshTokenHandler
+	revokeTokenHandler     *commands.RevokeTokenHandler
+	revokeAllTokensHandler *commands.RevokeAllTokensHandler
+	jwtService             *auth.JWTService
+	refreshTokenRepo       repositories.RefreshTokenRepository
+	refreshTokenExpiry     time.Duration
 }
 
 func NewAuthHandlers(

@@ -278,4 +278,3 @@ func TestGetHabitEntriesHandler_RequiresPaginationWithLongDateRange(t *testing.T
 		t.Errorf("Expected ErrInvalidInput for date range > 1 year without pagination, got %v", err)
 	}
 }
-

@@ -137,4 +137,3 @@ func TestUnmarkHabitHandler_ReturnsErrorWhenEntryNotFound(t *testing.T) {
 		t.Errorf("Expected ErrNotFound for missing entry, got %v", err)
 	}
 }
-

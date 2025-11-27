@@ -43,4 +43,3 @@ func TestNewHabitEntry_BooleanHabit(t *testing.T) {
 		t.Error("Value should be nil for boolean habit")
 	}
 }
-

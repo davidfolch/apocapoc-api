@@ -1,0 +1,63 @@
+package validation
+
+import "strings"
+
+var commonPasswords = map[string]bool{
+	"123456":      true,
+	"password":    true,
+	"123456789":   true,
+	"12345678":    true,
+	"12345":       true,
+	"1234567":     true,
+	"password1":   true,
+	"123123":      true,
+	"1234567890":  true,
+	"000000":      true,
+	"abc123":      true,
+	"1234":        true,
+	"qwerty":      true,
+	"111111":      true,
+	"123321":      true,
+	"dragon":      true,
+	"master":      true,
+	"monkey":      true,
+	"letmein":     true,
+	"login":       true,
+	"princess":    true,
+	"qwertyuiop":  true,
+	"solo":        true,
+	"passw0rd":    true,
+	"starwars":    true,
+	"iloveyou":    true,
+	"welcome":     true,
+	"admin":       true,
+	"sunshine":    true,
+	"password123": true,
+	"123qwe":      true,
+	"654321":      true,
+	"superman":    true,
+	"1qaz2wsx":    true,
+	"trustno1":    true,
+	"charlie":     true,
+	"666666":      true,
+	"qazwsx":      true,
+	"freedom":     true,
+	"football":    true,
+	"baseball":    true,
+	"whatever":    true,
+	"jordan":      true,
+	"killer":      true,
+	"summer":      true,
+	"hockey":      true,
+	"bailey":      true,
+	"shadow":      true,
+	"master123":   true,
+	"ninja":       true,
+	"mustang":     true,
+	"password!":   true,
+}
+
+func IsCommonPassword(password string) bool {
+	lower := strings.ToLower(password)
+	return commonPasswords[lower]
+}

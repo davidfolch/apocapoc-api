@@ -46,6 +46,8 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 
 	r.Route("/api/v1/habits", func(r chi.Router) {
 		r.Use(AuthMiddleware(jwtService))
+		r.Use(RateLimitByUser(jwtService, 100, 1*time.Minute))
+
 		r.Post("/", habitHandlers.CreateHabit)
 		r.Get("/", habitHandlers.GetUserHabits)
 		r.Get("/today", habitHandlers.GetTodaysHabits)
@@ -59,6 +61,7 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 
 	r.Route("/api/v1/stats", func(r chi.Router) {
 		r.Use(AuthMiddleware(jwtService))
+		r.Use(RateLimitByUser(jwtService, 100, 1*time.Minute))
 		r.Get("/habits/{id}", statsHandlers.GetHabitStats)
 	})
 

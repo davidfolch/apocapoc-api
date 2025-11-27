@@ -262,9 +262,9 @@ func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 	handler := NewRegisterUserHandler(repo, hasher)
 
 	tests := []struct {
-		name     string
-		cmd      RegisterUserCommand
-		wantErr  error
+		name    string
+		cmd     RegisterUserCommand
+		wantErr error
 	}{
 		{
 			"email with plus addressing",

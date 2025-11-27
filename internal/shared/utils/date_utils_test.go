@@ -21,25 +21,25 @@ func TestShouldAppearToday_Weekly(t *testing.T) {
 	}{
 		{
 			name:         "Monday when Monday is specified",
-			specificDays: []int{1}, // Monday
+			specificDays: []int{1},                                    // Monday
 			targetDate:   time.Date(2025, 1, 6, 0, 0, 0, 0, time.UTC), // Monday
 			expected:     true,
 		},
 		{
 			name:         "Tuesday when Monday is specified",
-			specificDays: []int{1}, // Monday
+			specificDays: []int{1},                                    // Monday
 			targetDate:   time.Date(2025, 1, 7, 0, 0, 0, 0, time.UTC), // Tuesday
 			expected:     false,
 		},
 		{
 			name:         "Wednesday when Mon/Wed/Fri specified",
-			specificDays: []int{1, 3, 5}, // Mon, Wed, Fri
+			specificDays: []int{1, 3, 5},                              // Mon, Wed, Fri
 			targetDate:   time.Date(2025, 1, 8, 0, 0, 0, 0, time.UTC), // Wednesday
 			expected:     true,
 		},
 		{
 			name:         "Sunday when Mon/Wed/Fri specified",
-			specificDays: []int{1, 3, 5}, // Mon, Wed, Fri
+			specificDays: []int{1, 3, 5},                              // Mon, Wed, Fri
 			targetDate:   time.Date(2025, 1, 5, 0, 0, 0, 0, time.UTC), // Sunday
 			expected:     false,
 		},

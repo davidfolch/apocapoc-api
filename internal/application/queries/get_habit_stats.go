@@ -10,14 +10,14 @@ import (
 )
 
 type HabitStatsDTO struct {
-	HabitID            string  `json:"habit_id"`
-	HabitName          string  `json:"habit_name"`
-	TotalCompletions   int     `json:"total_completions"`
-	CurrentStreak      int     `json:"current_streak"`
-	LongestStreak      int     `json:"longest_streak"`
-	CompletionRate     float64 `json:"completion_rate"`
-	CompletionsThisWeek int    `json:"completions_this_week"`
-	CompletionsThisMonth int   `json:"completions_this_month"`
+	HabitID              string  `json:"habit_id"`
+	HabitName            string  `json:"habit_name"`
+	TotalCompletions     int     `json:"total_completions"`
+	CurrentStreak        int     `json:"current_streak"`
+	LongestStreak        int     `json:"longest_streak"`
+	CompletionRate       float64 `json:"completion_rate"`
+	CompletionsThisWeek  int     `json:"completions_this_week"`
+	CompletionsThisMonth int     `json:"completions_this_month"`
 }
 
 type GetHabitStatsQuery struct {

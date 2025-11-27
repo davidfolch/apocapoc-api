@@ -14,14 +14,14 @@ type Claims struct {
 }
 
 type JWTService struct {
-	secret     []byte
-	expiry     time.Duration
+	secret []byte
+	expiry time.Duration
 }
 
 func NewJWTService(secret string, expiryHours int) *JWTService {
 	return &JWTService{
-		secret:     []byte(secret),
-		expiry:     time.Duration(expiryHours) * time.Hour,
+		secret: []byte(secret),
+		expiry: time.Duration(expiryHours) * time.Hour,
 	}
 }
 

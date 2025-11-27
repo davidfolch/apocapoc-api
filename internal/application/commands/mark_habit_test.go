@@ -11,9 +11,9 @@ import (
 )
 
 type mockEntryRepo struct {
-	createFunc               func(ctx context.Context, entry *entities.HabitEntry) error
-	findByDateRangeFunc      func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error)
-	updateFunc               func(ctx context.Context, entry *entities.HabitEntry) error
+	createFunc          func(ctx context.Context, entry *entities.HabitEntry) error
+	findByDateRangeFunc func(ctx context.Context, habitID string, from, to time.Time) ([]*entities.HabitEntry, error)
+	updateFunc          func(ctx context.Context, entry *entities.HabitEntry) error
 }
 
 func (m *mockEntryRepo) Create(ctx context.Context, entry *entities.HabitEntry) error {
@@ -537,5 +537,3 @@ func TestMarkHabitHandler_CounterFirstMarkWithNegative(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 }
-
-

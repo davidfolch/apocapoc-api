@@ -7,9 +7,9 @@ import (
 
 func TestHabitType_MarshalJSON(t *testing.T) {
 	tests := []struct {
-		name     string
+		name      string
 		habitType HabitType
-		expected string
+		expected  string
 	}{
 		{"Boolean", HabitTypeBoolean, `"BOOLEAN"`},
 		{"Counter", HabitTypeCounter, `"COUNTER"`},

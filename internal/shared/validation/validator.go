@@ -92,6 +92,10 @@ func ValidatePassword(password string) error {
 		return ValidationError{Field: "password", Message: "password must contain at least one special character"}
 	}
 
+	if IsCommonPassword(password) {
+		return ValidationError{Field: "password", Message: "password is too common, please choose a more secure password"}
+	}
+
 	return nil
 }
 
