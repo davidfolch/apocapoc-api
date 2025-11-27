@@ -12,7 +12,7 @@ func TestHabitEntriesFlow(t *testing.T) {
 
 	registerBody := RegisterRequest{
 		Email:    "entryuser@example.com",
-		Password: "password123",
+		Password: "Password123!",
 		Timezone: "UTC",
 	}
 	rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")

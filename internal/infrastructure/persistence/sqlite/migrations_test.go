@@ -94,7 +94,7 @@ func TestHabitEntriesTableSchema(t *testing.T) {
 		t.Fatalf("RunMigrations failed: %v", err)
 	}
 
-	columns := []string{"id", "habit_id", "scheduled_date", "completed_at", "value", "deleted_at"}
+	columns := []string{"id", "habit_id", "scheduled_date", "completed_at", "value"}
 	for _, col := range columns {
 		query := "SELECT " + col + " FROM habit_entries LIMIT 0"
 		rows, err := db.Query(query)

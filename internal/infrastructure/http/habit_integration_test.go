@@ -11,7 +11,7 @@ func TestHabitCRUDFlow(t *testing.T) {
 
 	registerBody := RegisterRequest{
 		Email:    "habituser@example.com",
-		Password: "password123",
+		Password: "Password123!",
 		Timezone: "UTC",
 	}
 	rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")
@@ -133,7 +133,7 @@ func TestHabitCRUDFlow(t *testing.T) {
 	t.Run("Access other user's habit", func(t *testing.T) {
 		registerBody := RegisterRequest{
 			Email:    "otheruser@example.com",
-			Password: "password123",
+			Password: "Password123!",
 			Timezone: "UTC",
 		}
 		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")

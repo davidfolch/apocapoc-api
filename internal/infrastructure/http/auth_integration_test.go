@@ -12,7 +12,7 @@ func TestAuthFlow(t *testing.T) {
 	t.Run("Register new user", func(t *testing.T) {
 		reqBody := RegisterRequest{
 			Email:    "test@example.com",
-			Password: "password123",
+			Password: "Password123!",
 			Timezone: "UTC",
 		}
 
@@ -36,7 +36,7 @@ func TestAuthFlow(t *testing.T) {
 	t.Run("Register duplicate email", func(t *testing.T) {
 		reqBody := RegisterRequest{
 			Email:    "duplicate@example.com",
-			Password: "password123",
+			Password: "Password123!",
 			Timezone: "UTC",
 		}
 
@@ -52,7 +52,7 @@ func TestAuthFlow(t *testing.T) {
 	t.Run("Register with invalid email", func(t *testing.T) {
 		reqBody := RegisterRequest{
 			Email:    "invalid-email",
-			Password: "password123",
+			Password: "Password123!",
 			Timezone: "UTC",
 		}
 
@@ -80,14 +80,14 @@ func TestAuthFlow(t *testing.T) {
 	t.Run("Login with valid credentials", func(t *testing.T) {
 		registerBody := RegisterRequest{
 			Email:    "login@example.com",
-			Password: "password123",
+			Password: "Password123!",
 			Timezone: "UTC",
 		}
 		makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")
 
 		loginBody := LoginRequest{
 			Email:    "login@example.com",
-			Password: "password123",
+			Password: "Password123!",
 		}
 
 		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/login", loginBody, "")
@@ -107,7 +107,7 @@ func TestAuthFlow(t *testing.T) {
 	t.Run("Login with invalid password", func(t *testing.T) {
 		registerBody := RegisterRequest{
 			Email:    "wrongpass@example.com",
-			Password: "password123",
+			Password: "Password123!",
 			Timezone: "UTC",
 		}
 		makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")
@@ -127,7 +127,7 @@ func TestAuthFlow(t *testing.T) {
 	t.Run("Login with non-existent user", func(t *testing.T) {
 		loginBody := LoginRequest{
 			Email:    "nonexistent@example.com",
-			Password: "password123",
+			Password: "Password123!",
 		}
 
 		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/login", loginBody, "")
