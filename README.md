@@ -65,11 +65,20 @@ The API will be available at `http://localhost:8080`
 
 ### Using the binary
 
-1. Download the latest release
-2. Copy `.env.example` to `.env` and configure
-3. Run: `./apocapoc-api`
+1. Download the latest release from [GitHub Releases](https://github.com/davidfolch/apocapoc-api/releases)
+2. Extract the archive:
+   ```bash
+   tar -xzf apocapoc-api_*_linux_amd64.tar.gz
+   ```
+3. Copy `.env.example` to `.env` and configure
+4. Run the binary:
+   ```bash
+   ./apocapoc-api
+   ```
 
 The API will be available at `http://localhost:8080`
+
+**Note:** Linux binaries only (amd64 and arm64). For other platforms, use Docker.
 
 ## Development
 
