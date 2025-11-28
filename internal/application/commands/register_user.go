@@ -2,6 +2,10 @@ package commands
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"time"
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/repositories"
@@ -16,38 +20,119 @@ type RegisterUserCommand struct {
 	Timezone string
 }
 
-type RegisterUserHandler struct {
-	userRepo       repositories.UserRepository
-	passwordHasher services.PasswordHasher
+type RegisterUserResult struct {
+	UserID                    string
+	EmailVerificationRequired bool
 }
 
-func NewRegisterUserHandler(userRepo repositories.UserRepository, passwordHasher services.PasswordHasher) *RegisterUserHandler {
+type RegisterUserHandler struct {
+	userRepo         repositories.UserRepository
+	passwordHasher   services.PasswordHasher
+	emailService     services.EmailService
+	appURL           string
+	registrationMode string
+}
+
+func NewRegisterUserHandler(
+	userRepo repositories.UserRepository,
+	passwordHasher services.PasswordHasher,
+	emailService services.EmailService,
+	appURL string,
+	registrationMode string,
+) *RegisterUserHandler {
 	return &RegisterUserHandler{
-		userRepo:       userRepo,
-		passwordHasher: passwordHasher,
+		userRepo:         userRepo,
+		passwordHasher:   passwordHasher,
+		emailService:     emailService,
+		appURL:           appURL,
+		registrationMode: registrationMode,
 	}
 }
 
-func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserCommand) (string, error) {
+func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserCommand) (*RegisterUserResult, error) {
+	if h.registrationMode == "closed" {
+		return nil, errors.ErrRegistrationClosed
+	}
+
 	if err := validation.ValidateRegistration(cmd.Email, cmd.Password, cmd.Timezone); err != nil {
-		return "", errors.ErrInvalidInput
+		return nil, errors.ErrInvalidInput
 	}
 
 	existing, _ := h.userRepo.FindByEmail(ctx, cmd.Email)
 	if existing != nil {
-		return "", errors.ErrAlreadyExists
+		return nil, errors.ErrAlreadyExists
 	}
 
 	hashedPassword, err := h.passwordHasher.Hash(cmd.Password)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	user := entities.NewUser(cmd.Email, hashedPassword, cmd.Timezone)
 
-	if err := h.userRepo.Create(ctx, user); err != nil {
-		return "", err
+	emailVerificationRequired := false
+	if h.emailService != nil {
+		token, err := h.generateVerificationToken()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate verification token: %w", err)
+		}
+
+		expiry := time.Now().Add(24 * time.Hour)
+		user.EmailVerificationToken = &token
+		user.EmailVerificationExpiry = &expiry
+		emailVerificationRequired = true
+	} else {
+		user.EmailVerified = true
 	}
 
-	return user.ID, nil
+	if err := h.userRepo.Create(ctx, user); err != nil {
+		return nil, err
+	}
+
+	if h.emailService != nil && user.EmailVerificationToken != nil {
+		if err := h.sendVerificationEmail(user); err != nil {
+			return &RegisterUserResult{
+				UserID:                    user.ID,
+				EmailVerificationRequired: emailVerificationRequired,
+			}, nil
+		}
+	}
+
+	return &RegisterUserResult{
+		UserID:                    user.ID,
+		EmailVerificationRequired: emailVerificationRequired,
+	}, nil
+}
+
+func (h *RegisterUserHandler) generateVerificationToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+func (h *RegisterUserHandler) sendVerificationEmail(user *entities.User) error {
+	if user.EmailVerificationToken == nil {
+		return nil
+	}
+
+	verificationLink := fmt.Sprintf("%s/verify-email?token=%s", h.appURL, *user.EmailVerificationToken)
+
+	emailBody := fmt.Sprintf(`
+		<h2>Welcome! Please verify your email</h2>
+		<p>Thank you for registering. Please click the link below to verify your email address:</p>
+		<p><a href="%s">Verify Email</a></p>
+		<p>This link will expire in 24 hours.</p>
+		<p>If you didn't create an account, you can safely ignore this email.</p>
+	`, verificationLink)
+
+	message := services.EmailMessage{
+		To:      user.Email,
+		Subject: "Verify your email address",
+		Body:    emailBody,
+		IsHTML:  true,
+	}
+
+	return h.emailService.Send(message)
 }

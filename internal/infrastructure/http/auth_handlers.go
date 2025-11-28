@@ -62,6 +62,11 @@ type AuthResponse struct {
 	UserID       string `json:"user_id"`
 }
 
+type RegisterResponse struct {
+	UserID  string `json:"user_id"`
+	Message string `json:"message"`
+}
+
 type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
@@ -72,13 +77,14 @@ type LogoutRequest struct {
 
 // Register godoc
 // @Summary Register a new user
-// @Description Create a new user account and receive both access token and refresh token. Store both tokens securely - the refresh token is used to obtain new access tokens when they expire.
+// @Description Create a new user account. If email verification is enabled, you will receive a verification email. Otherwise, you can login immediately.
 // @Tags auth
 // @Accept json
 // @Produce json
 // @Param request body RegisterRequest true "Registration data (password requires: min 8 chars, uppercase, lowercase, digit, special char)"
-// @Success 201 {object} AuthResponse "Returns access token, refresh token, and user ID"
+// @Success 201 {object} RegisterResponse "Returns user ID and message about next steps"
 // @Failure 400 {object} ErrorResponse "Invalid input: email format, password requirements, or timezone"
+// @Failure 403 {object} ErrorResponse "Registration is closed"
 // @Failure 409 {object} ErrorResponse "Email already registered"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /auth/register [post]
@@ -95,7 +101,7 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 		Timezone: req.Timezone,
 	}
 
-	userID, err := h.registerHandler.Handle(r.Context(), cmd)
+	result, err := h.registerHandler.Handle(r.Context(), cmd)
 	if err != nil {
 		if err == errors.ErrInvalidInput {
 			respondError(w, http.StatusBadRequest, "Invalid email or password (min 8 characters)")
@@ -105,31 +111,24 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusConflict, "Email already registered")
 			return
 		}
+		if err == errors.ErrRegistrationClosed {
+			respondError(w, http.StatusForbidden, "Registration is currently closed")
+			return
+		}
 		respondError(w, http.StatusInternalServerError, "Failed to register user")
 		return
 	}
 
-	token, err := h.jwtService.GenerateToken(userID, req.Email)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to generate token")
-		return
+	var message string
+	if result.EmailVerificationRequired {
+		message = "Registration successful. Please check your email to verify your account."
+	} else {
+		message = "Registration successful. You can now login."
 	}
 
-	refreshToken, err := queries.CreateRefreshToken(userID, h.refreshTokenExpiry)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to create refresh token")
-		return
-	}
-
-	if err := h.refreshTokenRepo.Create(r.Context(), refreshToken); err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to save refresh token")
-		return
-	}
-
-	respondJSON(w, http.StatusCreated, AuthResponse{
-		Token:        token,
-		RefreshToken: refreshToken.Token,
-		UserID:       userID,
+	respondJSON(w, http.StatusCreated, RegisterResponse{
+		UserID:  result.UserID,
+		Message: message,
 	})
 }
 
@@ -143,6 +142,7 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} AuthResponse "Returns access token, refresh token, and user ID"
 // @Failure 400 {object} ErrorResponse "Invalid request body"
 // @Failure 401 {object} ErrorResponse "Invalid email or password"
+// @Failure 403 {object} ErrorResponse "Email not verified"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /auth/login [post]
 func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
@@ -161,6 +161,10 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == errors.ErrNotFound || err == errors.ErrInvalidInput {
 			respondError(w, http.StatusUnauthorized, "Invalid email or password")
+			return
+		}
+		if err == errors.ErrEmailNotVerified {
+			respondError(w, http.StatusForbidden, "Please verify your email before logging in")
 			return
 		}
 		respondError(w, http.StatusInternalServerError, "Failed to login")

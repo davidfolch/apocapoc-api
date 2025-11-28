@@ -41,7 +41,7 @@ func setupTestServer(t *testing.T) *TestServer {
 	entryRepo := sqlite.NewHabitEntryRepository(db)
 	refreshTokenRepo := sqlite.NewRefreshTokenRepository(db)
 
-	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher)
+	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, nil, "", "open")
 	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
 	refreshTokenHandler := queries.NewRefreshTokenHandler(refreshTokenRepo, userRepo)
 	revokeTokenHandler := commands.NewRevokeTokenHandler(refreshTokenRepo)
@@ -103,4 +103,23 @@ func decodeResponse(t *testing.T, rr *httptest.ResponseRecorder, target interfac
 	if err := json.NewDecoder(rr.Body).Decode(target); err != nil {
 		t.Fatalf("Failed to decode response: %v", err)
 	}
+}
+
+func registerAndLogin(t *testing.T, router http.Handler, email, password string) string {
+	registerBody := RegisterRequest{
+		Email:    email,
+		Password: password,
+		Timezone: "UTC",
+	}
+	makeRequest(t, router, "POST", "/api/v1/auth/register", registerBody, "")
+
+	loginBody := LoginRequest{
+		Email:    email,
+		Password: password,
+	}
+	rr := makeRequest(t, router, "POST", "/api/v1/auth/login", loginBody, "")
+
+	var authResp AuthResponse
+	decodeResponse(t, rr, &authResp)
+	return authResp.Token
 }

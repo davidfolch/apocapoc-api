@@ -10,22 +10,14 @@ func TestHabitEntriesFlow(t *testing.T) {
 	ts := setupTestServer(t)
 	defer ts.Close()
 
-	registerBody := RegisterRequest{
-		Email:    "entryuser@example.com",
-		Password: "Password123!",
-		Timezone: "UTC",
-	}
-	rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")
-	var authResp AuthResponse
-	decodeResponse(t, rr, &authResp)
-	token := authResp.Token
+	token := registerAndLogin(t, *ts.Router, "entryuser@example.com", "Password123!")
 
 	habitBody := CreateHabitRequest{
 		Name:      "Reading",
 		Type:      "BOOLEAN",
 		Frequency: "DAILY",
 	}
-	rr = makeRequest(t, *ts.Router, "POST", "/api/v1/habits", habitBody, token)
+	rr := makeRequest(t, *ts.Router, "POST", "/api/v1/habits", habitBody, token)
 	var habitResp map[string]string
 	decodeResponse(t, rr, &habitResp)
 	habitID := habitResp["id"]

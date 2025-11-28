@@ -59,6 +59,10 @@ func (m *mockUserRepositoryForRefresh) FindByEmail(ctx context.Context, email st
 	return nil, nil
 }
 
+func (m *mockUserRepositoryForRefresh) FindByVerificationToken(ctx context.Context, token string) (*entities.User, error) {
+	return nil, errors.ErrNotFound
+}
+
 func (m *mockUserRepositoryForRefresh) Update(ctx context.Context, user *entities.User) error {
 	return nil
 }

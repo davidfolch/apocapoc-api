@@ -3,12 +3,15 @@ package entities
 import "time"
 
 type User struct {
-	ID           string
-	Email        string
-	PasswordHash string
-	Timezone     string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID                      string
+	Email                   string
+	PasswordHash            string
+	Timezone                string
+	EmailVerified           bool
+	EmailVerificationToken  *string
+	EmailVerificationExpiry *time.Time
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
 }
 
 func NewUser(email, passwordHash, timezone string) *User {

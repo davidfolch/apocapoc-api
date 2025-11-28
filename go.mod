@@ -35,6 +35,8 @@ require (
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/tools v0.36.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/mail.v2 v2.3.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect

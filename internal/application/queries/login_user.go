@@ -45,6 +45,10 @@ func (h *LoginUserHandler) Handle(ctx context.Context, query LoginUserQuery) (*L
 		return nil, errors.ErrNotFound
 	}
 
+	if !user.EmailVerified {
+		return nil, errors.ErrEmailNotVerified
+	}
+
 	return &LoginUserResult{
 		UserID:   user.ID,
 		Email:    user.Email,

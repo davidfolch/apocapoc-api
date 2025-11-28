@@ -13,8 +13,10 @@ import (
 	"apocapoc-api/internal/infrastructure/auth"
 	"apocapoc-api/internal/infrastructure/config"
 	"apocapoc-api/internal/infrastructure/crypto"
+	"apocapoc-api/internal/infrastructure/email"
 	httpInfra "apocapoc-api/internal/infrastructure/http"
 	"apocapoc-api/internal/infrastructure/persistence/sqlite"
+	"apocapoc-api/internal/shared/constants"
 )
 
 // @title Apocapoc API
@@ -60,12 +62,29 @@ func main() {
 	jwtService := auth.NewJWTService(cfg.JWTSecret, jwtExpiryHours)
 	passwordHasher := crypto.NewBcryptHasher()
 
+	var emailService *email.SMTPService
+	if cfg.SMTPHost != "" {
+		smtpPort, err := strconv.Atoi(cfg.SMTPPort)
+		if err != nil {
+			log.Fatalf("Invalid SMTP_PORT: %v", err)
+		}
+
+		emailService = email.NewSMTPService(email.SMTPConfig{
+			Host:         cfg.SMTPHost,
+			Port:         smtpPort,
+			Username:     cfg.SMTPUser,
+			Password:     cfg.SMTPPassword,
+			From:         constants.DefaultFrom,
+			SupportEmail: cfg.SupportEmail,
+		})
+	}
+
 	userRepo := sqlite.NewUserRepository(db.Conn())
 	habitRepo := sqlite.NewHabitRepository(db.Conn())
 	entryRepo := sqlite.NewHabitEntryRepository(db.Conn())
 	refreshTokenRepo := sqlite.NewRefreshTokenRepository(db.Conn())
 
-	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher)
+	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, emailService, constants.AppURL, cfg.RegistrationMode)
 	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
 	refreshTokenHandler := queries.NewRefreshTokenHandler(refreshTokenRepo, userRepo)
 	revokeTokenHandler := commands.NewRevokeTokenHandler(refreshTokenRepo)

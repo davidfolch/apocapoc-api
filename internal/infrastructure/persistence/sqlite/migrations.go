@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"fmt"
 )
 
 func RunMigrations(db *sql.DB) error {
@@ -18,7 +19,48 @@ func RunMigrations(db *sql.DB) error {
 			return err
 		}
 	}
+
+	if err := addEmailVerificationColumns(db); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func addEmailVerificationColumns(db *sql.DB) error {
+	columns := []struct {
+		name       string
+		definition string
+	}{
+		{"email_verified", "ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0"},
+		{"email_verification_token", "ALTER TABLE users ADD COLUMN email_verification_token TEXT"},
+		{"email_verification_expiry", "ALTER TABLE users ADD COLUMN email_verification_expiry DATETIME"},
+	}
+
+	for _, col := range columns {
+		exists, err := columnExists(db, "users", col.name)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			if _, err := db.Exec(col.definition); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func columnExists(db *sql.DB, table, column string) (bool, error) {
+	query := fmt.Sprintf("SELECT COUNT(*) FROM pragma_table_info('%s') WHERE name = ?", table)
+	var count int
+	err := db.QueryRow(query, column).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 const createUsersTable = `

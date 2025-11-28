@@ -22,14 +22,14 @@ func TestAuthFlow(t *testing.T) {
 			t.Errorf("Expected status 201, got %d. Body: %s", rr.Code, rr.Body.String())
 		}
 
-		var resp AuthResponse
+		var resp RegisterResponse
 		decodeResponse(t, rr, &resp)
 
-		if resp.Token == "" {
-			t.Error("Expected token in response")
-		}
 		if resp.UserID == "" {
 			t.Error("Expected user ID in response")
+		}
+		if resp.Message == "" {
+			t.Error("Expected message in response")
 		}
 	})
 

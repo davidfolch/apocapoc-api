@@ -16,6 +16,13 @@ type Config struct {
 	RefreshTokenExpiry string
 	CORSOrigins        string
 	DefaultTimezone    string
+	SMTPHost           string
+	SMTPPort           string
+	SMTPUser           string
+	SMTPPassword       string
+	SupportEmail       string
+	SendWelcomeEmail   string
+	RegistrationMode   string
 }
 
 func Load() (*Config, error) {
@@ -30,6 +37,13 @@ func Load() (*Config, error) {
 		RefreshTokenExpiry: os.Getenv("REFRESH_TOKEN_EXPIRY"),
 		CORSOrigins:        os.Getenv("CORS_ORIGINS"),
 		DefaultTimezone:    os.Getenv("DEFAULT_TIMEZONE"),
+		SMTPHost:           os.Getenv("SMTP_HOST"),
+		SMTPPort:           getEnvOrDefault("SMTP_PORT", "587"),
+		SMTPUser:           os.Getenv("SMTP_USER"),
+		SMTPPassword:       os.Getenv("SMTP_PASSWORD"),
+		SupportEmail:       getEnvOrDefault("SUPPORT_EMAIL", "contact@apocapoc.app"),
+		SendWelcomeEmail:   getEnvOrDefault("SEND_WELCOME_EMAIL", "false"),
+		RegistrationMode:   getEnvOrDefault("REGISTRATION_MODE", "open"),
 	}
 
 	if cfg.DBPath == "" {

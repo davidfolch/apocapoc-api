@@ -1,0 +1,76 @@
+package email
+
+import (
+	"crypto/tls"
+	"fmt"
+	"time"
+
+	"apocapoc-api/internal/domain/services"
+
+	"gopkg.in/mail.v2"
+)
+
+type SMTPConfig struct {
+	Host         string
+	Port         int
+	Username     string
+	Password     string
+	From         string
+	SupportEmail string
+}
+
+type SMTPService struct {
+	config SMTPConfig
+}
+
+func NewSMTPService(config SMTPConfig) *SMTPService {
+	return &SMTPService{
+		config: config,
+	}
+}
+
+func (s *SMTPService) Send(message services.EmailMessage) error {
+	m := mail.NewMessage()
+	m.SetHeader("From", s.config.From)
+	m.SetHeader("To", message.To)
+	m.SetHeader("Subject", message.Subject)
+
+	if message.IsHTML {
+		m.SetBody("text/html", message.Body)
+	} else {
+		m.SetBody("text/plain", message.Body)
+	}
+
+	dialer := mail.NewDialer(s.config.Host, s.config.Port, s.config.Username, s.config.Password)
+	dialer.TLSConfig = &tls.Config{
+		ServerName: s.config.Host,
+	}
+
+	if err := s.sendWithRetry(dialer, m); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SMTPService) sendWithRetry(dialer *mail.Dialer, message *mail.Message) error {
+	maxRetries := 3
+	var lastErr error
+
+	for i := 0; i < maxRetries; i++ {
+		if err := dialer.DialAndSend(message); err == nil {
+			return nil
+		} else {
+			lastErr = err
+			if i < maxRetries-1 {
+				time.Sleep(time.Second * time.Duration(i+1))
+			}
+		}
+	}
+
+	return lastErr
+}
+
+func (s *SMTPService) GetConfig() SMTPConfig {
+	return s.config
+}

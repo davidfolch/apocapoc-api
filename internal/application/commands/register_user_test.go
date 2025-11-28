@@ -25,6 +25,10 @@ func (m *mockUserRepo) FindByID(ctx context.Context, id string) (*entities.User,
 	return nil, nil
 }
 
+func (m *mockUserRepo) FindByVerificationToken(ctx context.Context, token string) (*entities.User, error) {
+	return nil, appErrors.ErrNotFound
+}
+
 func (m *mockUserRepo) Create(ctx context.Context, user *entities.User) error {
 	if m.createFunc != nil {
 		return m.createFunc(ctx, user)
@@ -61,7 +65,7 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher)
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -69,13 +73,17 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 		Timezone: "UTC",
 	}
 
-	userID, err := handler.Handle(context.Background(), cmd)
+	result, err := handler.Handle(context.Background(), cmd)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if userID == "" {
+	if result.UserID == "" {
 		t.Error("expected user ID, got empty string")
+	}
+
+	if result.EmailVerificationRequired {
+		t.Error("expected email verification to not be required when emailService is nil")
 	}
 
 	if createdUser == nil {
@@ -94,7 +102,7 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 func TestRegisterUserHandler_InvalidEmail(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher)
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
 
 	tests := []struct {
 		name  string
@@ -127,7 +135,7 @@ func TestRegisterUserHandler_InvalidEmail(t *testing.T) {
 func TestRegisterUserHandler_InvalidPassword(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher)
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
 
 	tests := []struct {
 		name     string
@@ -162,7 +170,7 @@ func TestRegisterUserHandler_InvalidPassword(t *testing.T) {
 func TestRegisterUserHandler_InvalidTimezone(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher)
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
 
 	tests := []struct {
 		name     string
@@ -198,7 +206,7 @@ func TestRegisterUserHandler_EmailAlreadyExists(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher)
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -220,7 +228,7 @@ func TestRegisterUserHandler_PasswordHashingError(t *testing.T) {
 			return "", expectedErr
 		},
 	}
-	handler := NewRegisterUserHandler(repo, hasher)
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -242,7 +250,7 @@ func TestRegisterUserHandler_RepositoryError(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher)
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -259,7 +267,7 @@ func TestRegisterUserHandler_RepositoryError(t *testing.T) {
 func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher)
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
 
 	tests := []struct {
 		name    string
@@ -320,5 +328,21 @@ func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 				t.Errorf("expected error %v, got %v", tt.wantErr, err)
 			}
 		})
+	}
+}
+func TestRegisterUserHandler_ClosedRegistration(t *testing.T) {
+	repo := &mockUserRepo{}
+	hasher := &mockPasswordHasher{}
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "closed")
+
+	cmd := RegisterUserCommand{
+		Email:    "test@example.com",
+		Password: "Secure123!",
+		Timezone: "UTC",
+	}
+
+	_, err := handler.Handle(context.Background(), cmd)
+	if err != appErrors.ErrRegistrationClosed {
+		t.Errorf("expected ErrRegistrationClosed, got %v", err)
 	}
 }

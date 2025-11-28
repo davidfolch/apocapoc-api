@@ -9,15 +9,7 @@ func TestHabitCRUDFlow(t *testing.T) {
 	ts := setupTestServer(t)
 	defer ts.Close()
 
-	registerBody := RegisterRequest{
-		Email:    "habituser@example.com",
-		Password: "Password123!",
-		Timezone: "UTC",
-	}
-	rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")
-	var authResp AuthResponse
-	decodeResponse(t, rr, &authResp)
-	token := authResp.Token
+	token := registerAndLogin(t, *ts.Router, "habituser@example.com", "Password123!")
 
 	var habitID string
 
@@ -131,30 +123,22 @@ func TestHabitCRUDFlow(t *testing.T) {
 	})
 
 	t.Run("Access other user's habit", func(t *testing.T) {
-		registerBody := RegisterRequest{
-			Email:    "otheruser@example.com",
-			Password: "Password123!",
-			Timezone: "UTC",
-		}
-		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")
-		var authResp AuthResponse
-		decodeResponse(t, rr, &authResp)
-		otherToken := authResp.Token
+		otherToken := registerAndLogin(t, *ts.Router, "otheruser@example.com", "Password123!")
 
 		reqBody := CreateHabitRequest{
 			Name:      "Other User Habit",
 			Type:      "BOOLEAN",
 			Frequency: "DAILY",
 		}
-		rr = makeRequest(t, *ts.Router, "POST", "/api/v1/habits", reqBody, otherToken)
+		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/habits", reqBody, otherToken)
 		var createResp map[string]string
 		decodeResponse(t, rr, &createResp)
 		otherHabitID := createResp["id"]
 
-		rr = makeRequest(t, *ts.Router, "GET", "/api/v1/habits/"+otherHabitID, nil, token)
+		rr2 := makeRequest(t, *ts.Router, "GET", "/api/v1/habits/"+otherHabitID, nil, token)
 
-		if rr.Code != http.StatusForbidden {
-			t.Errorf("Expected status 403, got %d", rr.Code)
+		if rr2.Code != http.StatusForbidden {
+			t.Errorf("Expected status 403, got %d", rr2.Code)
 		}
 	})
 }
