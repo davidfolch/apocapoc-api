@@ -594,19 +594,22 @@ func respondError(w http.ResponseWriter, status int, message string) {
 
 func respondValidationError(w http.ResponseWriter, err error) {
 	errMsg := err.Error()
-	var field *string
+	var field string
 
 	if strings.Contains(errMsg, ": ") {
 		parts := strings.SplitN(errMsg, ": ", 3)
 		if len(parts) >= 3 {
-			fieldName := parts[1]
-			field = &fieldName
+			field = parts[1]
 			errMsg = parts[2]
+			respondJSON(w, http.StatusBadRequest, ValidationErrorResponse{
+				Error: errMsg,
+				Field: field,
+			})
+			return
 		}
 	}
 
 	respondJSON(w, http.StatusBadRequest, ErrorResponse{
 		Error: errMsg,
-		Field: field,
 	})
 }

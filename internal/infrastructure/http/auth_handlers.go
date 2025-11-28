@@ -96,7 +96,7 @@ type LogoutRequest struct {
 // @Produce json
 // @Param request body RegisterRequest true "Registration data (password requires: min 8 chars, uppercase, lowercase, digit, special char)"
 // @Success 201 {object} RegisterResponse "Returns user ID and message about next steps"
-// @Failure 400 {object} ErrorResponse "Invalid input: email format, password requirements, or timezone"
+// @Failure 400 {object} ValidationErrorResponse "Invalid input: email format, password requirements, or timezone"
 // @Failure 403 {object} ErrorResponse "Registration is closed"
 // @Failure 409 {object} ErrorResponse "Email already registered"
 // @Failure 500 {object} ErrorResponse "Internal server error"

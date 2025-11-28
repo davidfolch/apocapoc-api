@@ -85,6 +85,10 @@ type HabitEntriesResponse struct {
 }
 
 type ErrorResponse struct {
-	Error string  `json:"error"`
-	Field *string `json:"field,omitempty"`
+	Error string `json:"error"`
+}
+
+type ValidationErrorResponse struct {
+	Error string `json:"error"`
+	Field string `json:"field"`
 }
