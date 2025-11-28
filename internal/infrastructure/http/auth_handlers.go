@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -9,18 +10,22 @@ import (
 	"apocapoc-api/internal/application/queries"
 	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/infrastructure/auth"
-	"apocapoc-api/internal/shared/errors"
+	appErrors "apocapoc-api/internal/shared/errors"
 )
 
 type AuthHandlers struct {
-	registerHandler        *commands.RegisterUserHandler
-	loginHandler           *queries.LoginUserHandler
-	refreshTokenHandler    *queries.RefreshTokenHandler
-	revokeTokenHandler     *commands.RevokeTokenHandler
-	revokeAllTokensHandler *commands.RevokeAllTokensHandler
-	jwtService             *auth.JWTService
-	refreshTokenRepo       repositories.RefreshTokenRepository
-	refreshTokenExpiry     time.Duration
+	registerHandler                *commands.RegisterUserHandler
+	loginHandler                   *queries.LoginUserHandler
+	refreshTokenHandler            *queries.RefreshTokenHandler
+	revokeTokenHandler             *commands.RevokeTokenHandler
+	revokeAllTokensHandler         *commands.RevokeAllTokensHandler
+	verifyEmailHandler             *commands.VerifyEmailHandler
+	resendVerificationEmailHandler *commands.ResendVerificationEmailHandler
+	requestPasswordResetHandler    *commands.RequestPasswordResetHandler
+	resetPasswordHandler           *commands.ResetPasswordHandler
+	jwtService                     *auth.JWTService
+	refreshTokenRepo               repositories.RefreshTokenRepository
+	refreshTokenExpiry             time.Duration
 }
 
 func NewAuthHandlers(
@@ -29,19 +34,27 @@ func NewAuthHandlers(
 	refreshTokenHandler *queries.RefreshTokenHandler,
 	revokeTokenHandler *commands.RevokeTokenHandler,
 	revokeAllTokensHandler *commands.RevokeAllTokensHandler,
+	verifyEmailHandler *commands.VerifyEmailHandler,
+	resendVerificationEmailHandler *commands.ResendVerificationEmailHandler,
+	requestPasswordResetHandler *commands.RequestPasswordResetHandler,
+	resetPasswordHandler *commands.ResetPasswordHandler,
 	jwtService *auth.JWTService,
 	refreshTokenRepo repositories.RefreshTokenRepository,
 	refreshTokenExpiry time.Duration,
 ) *AuthHandlers {
 	return &AuthHandlers{
-		registerHandler:        registerHandler,
-		loginHandler:           loginHandler,
-		refreshTokenHandler:    refreshTokenHandler,
-		revokeTokenHandler:     revokeTokenHandler,
-		revokeAllTokensHandler: revokeAllTokensHandler,
-		jwtService:             jwtService,
-		refreshTokenRepo:       refreshTokenRepo,
-		refreshTokenExpiry:     refreshTokenExpiry,
+		registerHandler:                registerHandler,
+		loginHandler:                   loginHandler,
+		refreshTokenHandler:            refreshTokenHandler,
+		revokeTokenHandler:             revokeTokenHandler,
+		revokeAllTokensHandler:         revokeAllTokensHandler,
+		verifyEmailHandler:             verifyEmailHandler,
+		resendVerificationEmailHandler: resendVerificationEmailHandler,
+		requestPasswordResetHandler:    requestPasswordResetHandler,
+		resetPasswordHandler:           resetPasswordHandler,
+		jwtService:                     jwtService,
+		refreshTokenRepo:               refreshTokenRepo,
+		refreshTokenExpiry:             refreshTokenExpiry,
 	}
 }
 
@@ -103,15 +116,15 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.registerHandler.Handle(r.Context(), cmd)
 	if err != nil {
-		if err == errors.ErrInvalidInput {
-			respondError(w, http.StatusBadRequest, "Invalid email or password (min 8 characters)")
+		if errors.Is(err, appErrors.ErrInvalidInput) {
+			respondValidationError(w, err)
 			return
 		}
-		if err == errors.ErrAlreadyExists {
+		if err == appErrors.ErrAlreadyExists {
 			respondError(w, http.StatusConflict, "Email already registered")
 			return
 		}
-		if err == errors.ErrRegistrationClosed {
+		if err == appErrors.ErrRegistrationClosed {
 			respondError(w, http.StatusForbidden, "Registration is currently closed")
 			return
 		}
@@ -159,11 +172,11 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.loginHandler.Handle(r.Context(), query)
 	if err != nil {
-		if err == errors.ErrNotFound || err == errors.ErrInvalidInput {
+		if err == appErrors.ErrNotFound || err == appErrors.ErrInvalidInput {
 			respondError(w, http.StatusUnauthorized, "Invalid email or password")
 			return
 		}
-		if err == errors.ErrEmailNotVerified {
+		if err == appErrors.ErrEmailNotVerified {
 			respondError(w, http.StatusForbidden, "Please verify your email before logging in")
 			return
 		}
@@ -220,7 +233,7 @@ func (h *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.refreshTokenHandler.Handle(r.Context(), query)
 	if err != nil {
-		if err == errors.ErrNotFound || err == errors.ErrInvalidInput {
+		if err == appErrors.ErrNotFound || err == appErrors.ErrInvalidInput {
 			respondError(w, http.StatusUnauthorized, "Invalid or expired refresh token")
 			return
 		}
@@ -280,11 +293,11 @@ func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
 
 	err := h.revokeTokenHandler.Handle(r.Context(), cmd)
 	if err != nil {
-		if err == errors.ErrNotFound {
+		if err == appErrors.ErrNotFound {
 			respondError(w, http.StatusNotFound, "Refresh token not found")
 			return
 		}
-		if err == errors.ErrInvalidInput {
+		if err == appErrors.ErrInvalidInput {
 			respondError(w, http.StatusBadRequest, "Invalid refresh token")
 			return
 		}
@@ -294,5 +307,201 @@ func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
 
 	respondJSON(w, http.StatusOK, map[string]string{
 		"message": "Successfully logged out",
+	})
+}
+
+type VerifyEmailRequest struct {
+	Token string `json:"token"`
+}
+
+type ResendVerificationRequest struct {
+	Email string `json:"email"`
+}
+
+// VerifyEmail godoc
+// @Summary Verify email address
+// @Description Verify user email address using the token sent via email
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body VerifyEmailRequest true "Verification token"
+// @Success 200 {object} map[string]string "Email verified successfully"
+// @Failure 400 {object} ErrorResponse "Invalid or expired token"
+// @Failure 409 {object} ErrorResponse "Email already verified"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /auth/verify-email [post]
+func (h *AuthHandlers) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var req VerifyEmailRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	cmd := commands.VerifyEmailCommand{
+		Token: req.Token,
+	}
+
+	err := h.verifyEmailHandler.Handle(r.Context(), cmd)
+	if err != nil {
+		if err == appErrors.ErrInvalidInput {
+			respondError(w, http.StatusBadRequest, "Invalid or expired verification token")
+			return
+		}
+		if err == appErrors.ErrAlreadyExists {
+			respondError(w, http.StatusConflict, "Email already verified")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Failed to verify email")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Email verified successfully",
+	})
+}
+
+// ResendVerification godoc
+// @Summary Resend verification email
+// @Description Resend the email verification link to the user's email address
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body ResendVerificationRequest true "User email"
+// @Success 200 {object} map[string]string "Verification email sent"
+// @Failure 400 {object} ErrorResponse "Invalid email"
+// @Failure 404 {object} ErrorResponse "User not found"
+// @Failure 409 {object} ErrorResponse "Email already verified"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /auth/resend-verification [post]
+func (h *AuthHandlers) ResendVerification(w http.ResponseWriter, r *http.Request) {
+	var req ResendVerificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	cmd := commands.ResendVerificationEmailCommand{
+		Email: req.Email,
+	}
+
+	err := h.resendVerificationEmailHandler.Handle(r.Context(), cmd)
+	if err != nil {
+		if err == appErrors.ErrInvalidInput {
+			respondError(w, http.StatusBadRequest, "Invalid email")
+			return
+		}
+		if err == appErrors.ErrNotFound {
+			respondError(w, http.StatusNotFound, "User not found")
+			return
+		}
+		if err == appErrors.ErrAlreadyExists {
+			respondError(w, http.StatusConflict, "Email already verified")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Failed to send verification email")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Verification email sent successfully",
+	})
+}
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+type ResetPasswordRequest struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+// ForgotPassword godoc
+// @Summary Request password reset
+// @Description Request a password reset email with a reset token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body ForgotPasswordRequest true "User email"
+// @Success 200 {object} map[string]string "Reset email sent successfully"
+// @Failure 400 {object} ErrorResponse "Invalid email"
+// @Failure 403 {object} ErrorResponse "Email not verified"
+// @Failure 404 {object} ErrorResponse "User not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /auth/forgot-password [post]
+func (h *AuthHandlers) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var req ForgotPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	cmd := commands.RequestPasswordResetCommand{
+		Email: req.Email,
+	}
+
+	err := h.requestPasswordResetHandler.Handle(r.Context(), cmd)
+	if err != nil {
+		if err == appErrors.ErrInvalidInput {
+			respondError(w, http.StatusBadRequest, "Invalid email")
+			return
+		}
+		if err == appErrors.ErrNotFound {
+			respondError(w, http.StatusNotFound, "User not found")
+			return
+		}
+		if err == appErrors.ErrEmailNotVerified {
+			respondError(w, http.StatusForbidden, "Please verify your email before resetting password")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Failed to send reset email")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Password reset email sent successfully",
+	})
+}
+
+// ResetPassword godoc
+// @Summary Reset password
+// @Description Reset user password using the reset token from email
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body ResetPasswordRequest true "Reset token and new password"
+// @Success 200 {object} map[string]string "Password reset successfully"
+// @Failure 400 {object} ErrorResponse "Invalid token or password requirements not met"
+// @Failure 404 {object} ErrorResponse "User not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /auth/reset-password [post]
+func (h *AuthHandlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	cmd := commands.ResetPasswordCommand{
+		Token:       req.Token,
+		NewPassword: req.NewPassword,
+	}
+
+	err := h.resetPasswordHandler.Handle(r.Context(), cmd)
+	if err != nil {
+		if err == appErrors.ErrInvalidInput {
+			respondError(w, http.StatusBadRequest, "Invalid or expired token, or password requirements not met")
+			return
+		}
+		if err == appErrors.ErrNotFound {
+			respondError(w, http.StatusNotFound, "User not found")
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Failed to reset password")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{
+		"message": "Password reset successfully",
 	})
 }

@@ -16,7 +16,6 @@ import (
 	"apocapoc-api/internal/infrastructure/email"
 	httpInfra "apocapoc-api/internal/infrastructure/http"
 	"apocapoc-api/internal/infrastructure/persistence/sqlite"
-	"apocapoc-api/internal/shared/constants"
 )
 
 // @title Apocapoc API
@@ -74,21 +73,29 @@ func main() {
 			Port:         smtpPort,
 			Username:     cfg.SMTPUser,
 			Password:     cfg.SMTPPassword,
-			From:         constants.DefaultFrom,
+			From:         cfg.SMTPFrom,
 			SupportEmail: cfg.SupportEmail,
 		})
 	}
+
+	sendWelcomeEmail := cfg.SendWelcomeEmail == "true"
 
 	userRepo := sqlite.NewUserRepository(db.Conn())
 	habitRepo := sqlite.NewHabitRepository(db.Conn())
 	entryRepo := sqlite.NewHabitEntryRepository(db.Conn())
 	refreshTokenRepo := sqlite.NewRefreshTokenRepository(db.Conn())
+	passwordResetTokenRepo := sqlite.NewPasswordResetTokenRepository(db.Conn())
 
-	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, emailService, constants.AppURL, cfg.RegistrationMode)
+	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, emailService, cfg.AppURL, cfg.RegistrationMode, sendWelcomeEmail)
 	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
 	refreshTokenHandler := queries.NewRefreshTokenHandler(refreshTokenRepo, userRepo)
 	revokeTokenHandler := commands.NewRevokeTokenHandler(refreshTokenRepo)
 	revokeAllTokensHandler := commands.NewRevokeAllTokensHandler(refreshTokenRepo)
+	verifyEmailHandler := commands.NewVerifyEmailHandler(userRepo, emailService, sendWelcomeEmail)
+	resendVerificationEmailHandler := commands.NewResendVerificationEmailHandler(userRepo, emailService, cfg.AppURL)
+	requestPasswordResetHandler := commands.NewRequestPasswordResetHandler(userRepo, passwordResetTokenRepo, emailService, cfg.AppURL)
+	resetPasswordHandler := commands.NewResetPasswordHandler(userRepo, passwordResetTokenRepo, passwordHasher)
+	deleteUserHandler := commands.NewDeleteUserHandler(userRepo)
 	createHandler := commands.NewCreateHabitHandler(habitRepo)
 	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
 	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)
@@ -100,14 +107,15 @@ func main() {
 	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
 	unmarkHandler := commands.NewUnmarkHabitHandler(habitRepo, entryRepo)
 
-	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
+	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
 	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
 	statsHandlers := httpInfra.NewStatsHandlers(getHabitStatsHandler)
 	healthHandlers := httpInfra.NewHealthHandlers(db.Conn())
+	userHandlers := httpInfra.NewUserHandlers(deleteUserHandler)
 
-	router := httpInfra.NewRouter(cfg.CORSOrigins, habitHandlers, authHandlers, statsHandlers, healthHandlers, jwtService)
+	router := httpInfra.NewRouter(cfg.AppURL, habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService)
 
-	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
+	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
 	log.Printf("Server starting on %s", addr)
 
 	if err := http.ListenAndServe(addr, router); err != nil {

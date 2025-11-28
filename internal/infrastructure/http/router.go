@@ -15,13 +15,13 @@ import (
 	_ "apocapoc-api/docs"
 )
 
-func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, healthHandlers *HealthHandlers, jwtService *auth.JWTService) *chi.Mux {
+func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, healthHandlers *HealthHandlers, userHandlers *UserHandlers, jwtService *auth.JWTService) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{corsOrigins},
+		AllowedOrigins:   []string{appURL},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -42,6 +42,10 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 		r.Post("/login", authHandlers.Login)
 		r.Post("/refresh", authHandlers.Refresh)
 		r.Post("/logout", authHandlers.Logout)
+		r.Post("/verify-email", authHandlers.VerifyEmail)
+		r.Post("/resend-verification", authHandlers.ResendVerification)
+		r.Post("/forgot-password", authHandlers.ForgotPassword)
+		r.Post("/reset-password", authHandlers.ResetPassword)
 	})
 
 	r.Route("/api/v1/habits", func(r chi.Router) {
@@ -63,6 +67,12 @@ func NewRouter(corsOrigins string, habitHandlers *HabitHandlers, authHandlers *A
 		r.Use(AuthMiddleware(jwtService))
 		r.Use(RateLimitByUser(jwtService, 100, 1*time.Minute))
 		r.Get("/habits/{id}", statsHandlers.GetHabitStats)
+	})
+
+	r.Route("/api/v1/users", func(r chi.Router) {
+		r.Use(AuthMiddleware(jwtService))
+		r.Use(RateLimitByUser(jwtService, 100, 1*time.Minute))
+		r.Delete("/me", userHandlers.DeleteAccount)
 	})
 
 	return r

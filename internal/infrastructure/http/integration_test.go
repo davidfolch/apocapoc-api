@@ -40,12 +40,17 @@ func setupTestServer(t *testing.T) *TestServer {
 	habitRepo := sqlite.NewHabitRepository(db)
 	entryRepo := sqlite.NewHabitEntryRepository(db)
 	refreshTokenRepo := sqlite.NewRefreshTokenRepository(db)
+	passwordResetTokenRepo := sqlite.NewPasswordResetTokenRepository(db)
 
 	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, nil, "", "open")
 	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
 	refreshTokenHandler := queries.NewRefreshTokenHandler(refreshTokenRepo, userRepo)
 	revokeTokenHandler := commands.NewRevokeTokenHandler(refreshTokenRepo)
 	revokeAllTokensHandler := commands.NewRevokeAllTokensHandler(refreshTokenRepo)
+	verifyEmailHandler := commands.NewVerifyEmailHandler(userRepo)
+	resendVerificationEmailHandler := commands.NewResendVerificationEmailHandler(userRepo, nil, "")
+	requestPasswordResetHandler := commands.NewRequestPasswordResetHandler(userRepo, passwordResetTokenRepo, nil, "")
+	resetPasswordHandler := commands.NewResetPasswordHandler(userRepo, passwordResetTokenRepo, passwordHasher)
 	createHandler := commands.NewCreateHabitHandler(habitRepo)
 	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)
 	getUserHabitsHandler := queries.NewGetUserHabitsHandler(habitRepo)
@@ -59,12 +64,15 @@ func setupTestServer(t *testing.T) *TestServer {
 
 	refreshTokenExpiry := 7 * 24 * time.Hour
 
-	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
+	deleteUserHandler := commands.NewDeleteUserHandler(userRepo)
+
+	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
 	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
 	statsHandlers := NewStatsHandlers(getHabitStatsHandler)
 	healthHandlers := NewHealthHandlers(db)
+	userHandlers := NewUserHandlers(deleteUserHandler)
 
-	router := NewRouter("*", habitHandlers, authHandlers, statsHandlers, healthHandlers, jwtService)
+	router := NewRouter("http://localhost:3000", habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService)
 
 	handler := http.Handler(router)
 	return &TestServer{

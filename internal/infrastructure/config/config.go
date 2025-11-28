@@ -10,16 +10,16 @@ import (
 type Config struct {
 	DBPath             string
 	Port               string
-	Host               string
+	AppURL             string
 	JWTSecret          string
 	JWTExpiry          string
 	RefreshTokenExpiry string
-	CORSOrigins        string
 	DefaultTimezone    string
 	SMTPHost           string
 	SMTPPort           string
 	SMTPUser           string
 	SMTPPassword       string
+	SMTPFrom           string
 	SupportEmail       string
 	SendWelcomeEmail   string
 	RegistrationMode   string
@@ -31,16 +31,16 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		DBPath:             os.Getenv("DB_PATH"),
 		Port:               getEnvOrDefault("PORT", "8080"),
-		Host:               getEnvOrDefault("HOST", "0.0.0.0"),
+		AppURL:             getEnvOrDefault("APP_URL", "http://localhost:8080"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		JWTExpiry:          os.Getenv("JWT_EXPIRY"),
 		RefreshTokenExpiry: os.Getenv("REFRESH_TOKEN_EXPIRY"),
-		CORSOrigins:        os.Getenv("CORS_ORIGINS"),
 		DefaultTimezone:    os.Getenv("DEFAULT_TIMEZONE"),
 		SMTPHost:           os.Getenv("SMTP_HOST"),
 		SMTPPort:           getEnvOrDefault("SMTP_PORT", "587"),
 		SMTPUser:           os.Getenv("SMTP_USER"),
 		SMTPPassword:       os.Getenv("SMTP_PASSWORD"),
+		SMTPFrom:           os.Getenv("SMTP_FROM"),
 		SupportEmail:       getEnvOrDefault("SUPPORT_EMAIL", "contact@apocapoc.app"),
 		SendWelcomeEmail:   getEnvOrDefault("SEND_WELCOME_EMAIL", "false"),
 		RegistrationMode:   getEnvOrDefault("REGISTRATION_MODE", "open"),
@@ -48,6 +48,9 @@ func Load() (*Config, error) {
 
 	if cfg.DBPath == "" {
 		return nil, fmt.Errorf("DB_PATH is required")
+	}
+	if cfg.AppURL == "" {
+		return nil, fmt.Errorf("APP_URL is required")
 	}
 	if cfg.JWTSecret == "" {
 		return nil, fmt.Errorf("JWT_SECRET is required")
@@ -57,9 +60,6 @@ func Load() (*Config, error) {
 	}
 	if cfg.RefreshTokenExpiry == "" {
 		return nil, fmt.Errorf("REFRESH_TOKEN_EXPIRY is required")
-	}
-	if cfg.CORSOrigins == "" {
-		return nil, fmt.Errorf("CORS_ORIGINS is required")
 	}
 	if cfg.DefaultTimezone == "" {
 		return nil, fmt.Errorf("DEFAULT_TIMEZONE is required")

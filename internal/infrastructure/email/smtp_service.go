@@ -3,6 +3,7 @@ package email
 import (
 	"crypto/tls"
 	"fmt"
+	"strings"
 	"time"
 
 	"apocapoc-api/internal/domain/services"
@@ -46,6 +47,11 @@ func (s *SMTPService) Send(message services.EmailMessage) error {
 		ServerName: s.config.Host,
 	}
 
+	// Use SSL from start for port 465, STARTTLS for other ports
+	if s.config.Port == 465 {
+		dialer.SSL = true
+	}
+
 	if err := s.sendWithRetry(dialer, m); err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
 	}
@@ -62,13 +68,36 @@ func (s *SMTPService) sendWithRetry(dialer *mail.Dialer, message *mail.Message) 
 			return nil
 		} else {
 			lastErr = err
+
+			if isAuthError(err) {
+				return fmt.Errorf("SMTP authentication failed. Please check your SMTP credentials (username, password, and from address)")
+			}
+
+			if isConfigError(err) {
+				return fmt.Errorf("SMTP configuration error: %w", err)
+			}
+
 			if i < maxRetries-1 {
 				time.Sleep(time.Second * time.Duration(i+1))
 			}
 		}
 	}
 
-	return lastErr
+	return fmt.Errorf("failed to send email after %d attempts: %w", maxRetries, lastErr)
+}
+
+func isAuthError(err error) bool {
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "authentication failed") ||
+		strings.Contains(errStr, "535") ||
+		strings.Contains(errStr, "invalid credentials")
+}
+
+func isConfigError(err error) bool {
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "connection refused") ||
+		strings.Contains(errStr, "no such host") ||
+		strings.Contains(errStr, "network is unreachable")
 }
 
 func (s *SMTPService) GetConfig() SMTPConfig {

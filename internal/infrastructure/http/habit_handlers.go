@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"apocapoc-api/internal/application/commands"
@@ -589,4 +590,23 @@ func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 
 func respondError(w http.ResponseWriter, status int, message string) {
 	respondJSON(w, status, ErrorResponse{Error: message})
+}
+
+func respondValidationError(w http.ResponseWriter, err error) {
+	errMsg := err.Error()
+	var field *string
+
+	if strings.Contains(errMsg, ": ") {
+		parts := strings.SplitN(errMsg, ": ", 3)
+		if len(parts) >= 3 {
+			fieldName := parts[1]
+			field = &fieldName
+			errMsg = parts[2]
+		}
+	}
+
+	respondJSON(w, http.StatusBadRequest, ErrorResponse{
+		Error: errMsg,
+		Field: field,
+	})
 }

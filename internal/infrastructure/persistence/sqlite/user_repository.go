@@ -170,6 +170,22 @@ func (r *UserRepository) Update(ctx context.Context, user *entities.User) error 
 	return nil
 }
 
+func (r *UserRepository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM users WHERE id = ?`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return errors.ErrNotFound
+	}
+
+	return nil
+}
+
 func isUniqueConstraintError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed")
 }

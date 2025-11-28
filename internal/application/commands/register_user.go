@@ -31,6 +31,7 @@ type RegisterUserHandler struct {
 	emailService     services.EmailService
 	appURL           string
 	registrationMode string
+	sendWelcomeEmail bool
 }
 
 func NewRegisterUserHandler(
@@ -39,6 +40,7 @@ func NewRegisterUserHandler(
 	emailService services.EmailService,
 	appURL string,
 	registrationMode string,
+	sendWelcomeEmail bool,
 ) *RegisterUserHandler {
 	return &RegisterUserHandler{
 		userRepo:         userRepo,
@@ -46,6 +48,7 @@ func NewRegisterUserHandler(
 		emailService:     emailService,
 		appURL:           appURL,
 		registrationMode: registrationMode,
+		sendWelcomeEmail: sendWelcomeEmail,
 	}
 }
 
@@ -55,7 +58,7 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 	}
 
 	if err := validation.ValidateRegistration(cmd.Email, cmd.Password, cmd.Timezone); err != nil {
-		return nil, errors.ErrInvalidInput
+		return nil, fmt.Errorf("%w: %v", errors.ErrInvalidInput, err)
 	}
 
 	existing, _ := h.userRepo.FindByEmail(ctx, cmd.Email)
@@ -81,21 +84,16 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 		user.EmailVerificationToken = &token
 		user.EmailVerificationExpiry = &expiry
 		emailVerificationRequired = true
+
+		if err := h.sendVerificationEmail(user); err != nil {
+			return nil, fmt.Errorf("failed to send verification email: %w", err)
+		}
 	} else {
 		user.EmailVerified = true
 	}
 
 	if err := h.userRepo.Create(ctx, user); err != nil {
 		return nil, err
-	}
-
-	if h.emailService != nil && user.EmailVerificationToken != nil {
-		if err := h.sendVerificationEmail(user); err != nil {
-			return &RegisterUserResult{
-				UserID:                    user.ID,
-				EmailVerificationRequired: emailVerificationRequired,
-			}, nil
-		}
 	}
 
 	return &RegisterUserResult{

@@ -40,6 +40,10 @@ func (m *mockUserRepo) Update(ctx context.Context, user *entities.User) error {
 	return nil
 }
 
+func (m *mockUserRepo) Delete(ctx context.Context, id string) error {
+	return nil
+}
+
 type mockPasswordHasher struct {
 	hashFunc func(password string) (string, error)
 }
@@ -65,7 +69,7 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -102,7 +106,7 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 func TestRegisterUserHandler_InvalidEmail(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
 
 	tests := []struct {
 		name  string
@@ -125,7 +129,7 @@ func TestRegisterUserHandler_InvalidEmail(t *testing.T) {
 			}
 
 			_, err := handler.Handle(context.Background(), cmd)
-			if err != appErrors.ErrInvalidInput {
+			if !errors.Is(err, appErrors.ErrInvalidInput) {
 				t.Errorf("expected ErrInvalidInput, got %v", err)
 			}
 		})
@@ -135,7 +139,7 @@ func TestRegisterUserHandler_InvalidEmail(t *testing.T) {
 func TestRegisterUserHandler_InvalidPassword(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
 
 	tests := []struct {
 		name     string
@@ -160,7 +164,7 @@ func TestRegisterUserHandler_InvalidPassword(t *testing.T) {
 			}
 
 			_, err := handler.Handle(context.Background(), cmd)
-			if err != appErrors.ErrInvalidInput {
+			if !errors.Is(err, appErrors.ErrInvalidInput) {
 				t.Errorf("expected ErrInvalidInput, got %v", err)
 			}
 		})
@@ -170,7 +174,7 @@ func TestRegisterUserHandler_InvalidPassword(t *testing.T) {
 func TestRegisterUserHandler_InvalidTimezone(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
 
 	tests := []struct {
 		name     string
@@ -191,7 +195,7 @@ func TestRegisterUserHandler_InvalidTimezone(t *testing.T) {
 			}
 
 			_, err := handler.Handle(context.Background(), cmd)
-			if err != appErrors.ErrInvalidInput {
+			if !errors.Is(err, appErrors.ErrInvalidInput) {
 				t.Errorf("expected ErrInvalidInput, got %v", err)
 			}
 		})
@@ -206,7 +210,7 @@ func TestRegisterUserHandler_EmailAlreadyExists(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -215,7 +219,7 @@ func TestRegisterUserHandler_EmailAlreadyExists(t *testing.T) {
 	}
 
 	_, err := handler.Handle(context.Background(), cmd)
-	if err != appErrors.ErrAlreadyExists {
+	if !errors.Is(err, appErrors.ErrAlreadyExists) {
 		t.Errorf("expected ErrAlreadyExists, got %v", err)
 	}
 }
@@ -228,7 +232,7 @@ func TestRegisterUserHandler_PasswordHashingError(t *testing.T) {
 			return "", expectedErr
 		},
 	}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -250,7 +254,7 @@ func TestRegisterUserHandler_RepositoryError(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -267,7 +271,7 @@ func TestRegisterUserHandler_RepositoryError(t *testing.T) {
 func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
 
 	tests := []struct {
 		name    string
@@ -333,7 +337,7 @@ func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 func TestRegisterUserHandler_ClosedRegistration(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "closed")
+	handler := NewRegisterUserHandler(repo, hasher, nil, "", "closed", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -342,7 +346,7 @@ func TestRegisterUserHandler_ClosedRegistration(t *testing.T) {
 	}
 
 	_, err := handler.Handle(context.Background(), cmd)
-	if err != appErrors.ErrRegistrationClosed {
+	if !errors.Is(err, appErrors.ErrRegistrationClosed) {
 		t.Errorf("expected ErrRegistrationClosed, got %v", err)
 	}
 }

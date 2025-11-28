@@ -11,6 +11,7 @@ func RunMigrations(db *sql.DB) error {
 		createHabitsTable,
 		createHabitEntriesTable,
 		createRefreshTokensTable,
+		createPasswordResetTokensTable,
 		createIndexes,
 	}
 
@@ -117,6 +118,18 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 );
 `
 
+const createPasswordResetTokensTable = `
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+	id TEXT PRIMARY KEY,
+	user_id TEXT NOT NULL,
+	token TEXT UNIQUE NOT NULL,
+	expires_at DATETIME NOT NULL,
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	used_at DATETIME,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+`
+
 const createIndexes = `
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
 CREATE INDEX IF NOT EXISTS idx_habits_active ON habits(user_id, archived_at);
@@ -124,4 +137,6 @@ CREATE INDEX IF NOT EXISTS idx_entries_habit ON habit_entries(habit_id);
 CREATE INDEX IF NOT EXISTS idx_entries_scheduled ON habit_entries(scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user ON password_reset_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens(token);
 `

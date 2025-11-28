@@ -67,6 +67,10 @@ func (m *mockUserRepositoryForRefresh) Update(ctx context.Context, user *entitie
 	return nil
 }
 
+func (m *mockUserRepositoryForRefresh) Delete(ctx context.Context, id string) error {
+	return nil
+}
+
 func TestRefreshTokenHandler_Success(t *testing.T) {
 	refreshTokenRepo := &mockRefreshTokenRepository{
 		findByTokenFunc: func(ctx context.Context, token string) (*entities.RefreshToken, error) {
