@@ -182,3 +182,87 @@ func TestRefreshTokenHandler_EmptyToken(t *testing.T) {
 		t.Errorf("Expected ErrInvalidInput, got %v", err)
 	}
 }
+
+func TestGenerateRefreshToken(t *testing.T) {
+	token1, err := GenerateRefreshToken()
+	if err != nil {
+		t.Fatalf("GenerateRefreshToken() unexpected error = %v", err)
+	}
+
+	if token1 == "" {
+		t.Fatal("GenerateRefreshToken() returned empty token")
+	}
+
+	token2, err := GenerateRefreshToken()
+	if err != nil {
+		t.Fatalf("GenerateRefreshToken() unexpected error = %v", err)
+	}
+
+	if token1 == token2 {
+		t.Error("GenerateRefreshToken() generated identical tokens")
+	}
+
+	if len(token1) < 20 {
+		t.Errorf("GenerateRefreshToken() token too short: %d characters", len(token1))
+	}
+}
+
+func TestCreateRefreshToken(t *testing.T) {
+	userID := "user-123"
+	expiryDuration := 7 * 24 * time.Hour
+
+	token, err := CreateRefreshToken(userID, expiryDuration)
+	if err != nil {
+		t.Fatalf("CreateRefreshToken() unexpected error = %v", err)
+	}
+
+	if token == nil {
+		t.Fatal("CreateRefreshToken() returned nil")
+	}
+
+	if token.UserID != userID {
+		t.Errorf("UserID = %v, want %v", token.UserID, userID)
+	}
+
+	if token.Token == "" {
+		t.Error("Token is empty")
+	}
+
+	if token.ExpiresAt.IsZero() {
+		t.Error("ExpiresAt is zero")
+	}
+
+	if token.CreatedAt.IsZero() {
+		t.Error("CreatedAt is zero")
+	}
+
+	expectedExpiry := time.Now().Add(expiryDuration)
+	diff := token.ExpiresAt.Sub(expectedExpiry)
+	if diff > time.Second || diff < -time.Second {
+		t.Errorf("ExpiresAt difference too large: %v", diff)
+	}
+
+	if !token.IsValid() {
+		t.Error("Token should be valid")
+	}
+}
+
+func TestCreateRefreshToken_MultipleCalls(t *testing.T) {
+	token1, err := CreateRefreshToken("user-1", 24*time.Hour)
+	if err != nil {
+		t.Fatalf("CreateRefreshToken(1) unexpected error = %v", err)
+	}
+
+	token2, err := CreateRefreshToken("user-2", 24*time.Hour)
+	if err != nil {
+		t.Fatalf("CreateRefreshToken(2) unexpected error = %v", err)
+	}
+
+	if token1.Token == token2.Token {
+		t.Error("CreateRefreshToken() generated identical tokens for different users")
+	}
+
+	if token1.UserID == token2.UserID {
+		t.Error("UserIDs should be different")
+	}
+}

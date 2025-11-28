@@ -1,19 +1,32 @@
-# Apocapoc
+# Apocapoc API - Self-Hosted Habit Tracker
 
-Self-hosted habit tracking service with a clean, hexagonal architecture.
+**Lightweight REST API for habit tracking built with Go.** Designed for developers who want full control over their data without relying on third-party services. Deploy in minutes with Docker and start building your own productivity tools.
+
+[![Docker](https://img.shields.io/docker/v/ghcr.io/davidfolch/apocapoc-api?label=docker&logo=docker)](https://github.com/davidfolch/apocapoc-api/pkgs/container/apocapoc-api)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/davidfolch/apocapoc-api)](https://golang.org/)
+[![License](https://img.shields.io/github/license/davidfolch/apocapoc-api)](LICENSE)
+
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+  - [Docker Compose (Recommended)](#using-docker-compose-recommended)
+  - [Binary Installation](#using-the-binary)
+- [Use Cases](#use-cases)
+- [API Documentation](#api-documentation)
+- [Development](#development)
+- [Architecture](#architecture)
 
 ## Features
 
-- **Multiple habit types**: Boolean (check), Counter, Value
-- **Flexible scheduling**: Daily, Weekly, Monthly with specific days
-- **Carry-over support**: Choose if incomplete habits persist or expire
-- **Full history tracking**: Complete audit trail of all interactions
-- **Statistics**: Track streaks, completion rates, and progress
-- **Self-hosted first**: Easy deployment with SQLite
-- **Security**: JWT authentication, rate limiting on auth endpoints, optional email verification
-- **Email notifications**: Optional welcome emails and verification emails
-- **Registration control**: Open or closed registration modes
-- **API Documentation**: Interactive Swagger UI
+- **Multiple habit types**: Boolean (daily check-ins), Counter (track numbers), Value (measurements)
+- **Flexible scheduling**: Daily, Weekly, Monthly with custom day selection
+- **Statistics endpoints**: Streaks, completion rates, and progress tracking
+- **Complete history**: Full audit trail of all interactions
+- **Easy deployment**: Single Docker container or binary with embedded SQLite
+- **Security**: JWT authentication, rate limiting, optional email verification
+- **Registration modes**: Open or closed for controlled access
+- **Interactive docs**: Built-in Swagger UI for testing endpoints
 
 ## Quick Start
 
@@ -60,87 +73,81 @@ volumes:
 docker-compose up -d
 ```
 
-The API will be available at `http://localhost:8080`
+API available at `http://localhost:8080`
 
-**Available image tags:**
-- `latest`: Latest stable release (recommended for production)
-- `1`, `1.0`, `1.0.0`: Specific version tags
-- `edge`: Latest development build from main branch (unstable)
-- `sha-abc123`: Specific commit (for debugging)
+**Image tags:**
+- `latest`: Stable release (recommended)
+- `1`, `1.0`, `1.0.0`: Specific versions
+- `edge`: Development build (unstable)
 
-**Configuration options:**
+**Configuration:**
 
-**Required:**
-- `JWT_SECRET`: **Required**. Use a long random string
-- `DB_PATH`: Database file path (default: `./data/apocapoc.db`)
+*Required:*
+- `JWT_SECRET`: Long random string (required)
+- `DB_PATH`: Database path (default: `./data/apocapoc.db`)
 
-**Application:**
+*Application:*
 - `PORT`: HTTP port (default: `8080`)
-- `APP_URL`: Public URL for email links (e.g., `https://habits.yourdomain.com`)
-- `DEFAULT_TIMEZONE`: Timezone for date calculations (e.g., `UTC`, `Europe/Madrid`)
+- `APP_URL`: Public URL for email links
+- `DEFAULT_TIMEZONE`: e.g., `UTC`, `Europe/Madrid`
 
-**Authentication:**
-- `JWT_EXPIRY`: Token expiration (e.g., `1h`, `24h`)
-- `REFRESH_TOKEN_EXPIRY`: Refresh token expiration (e.g., `7d`, `168h`)
+*Authentication:*
+- `JWT_EXPIRY`: e.g., `1h`, `24h`
+- `REFRESH_TOKEN_EXPIRY`: e.g., `7d`, `168h`
+- `REGISTRATION_MODE`: `open` or `closed`
 
-**Registration:**
-- `REGISTRATION_MODE`: `open` (anyone can register) or `closed` (registration disabled)
+*Email (optional):*
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`
+- `SUPPORT_EMAIL`: Default `contact@apocapoc.app`
+- `SEND_WELCOME_EMAIL`: `true`/`false`
 
-**Email (optional - all or none):**
-- `SMTP_HOST`: SMTP server hostname
-- `SMTP_PORT`: SMTP port (`587` for STARTTLS, `465` for SSL)
-- `SMTP_USER`: SMTP username
-- `SMTP_PASSWORD`: SMTP password (use `$$` to escape `$` in passwords)
-- `SMTP_FROM`: From address for emails
-- `SUPPORT_EMAIL`: Support email shown in emails (default: `contact@apocapoc.app`)
-- `SEND_WELCOME_EMAIL`: Send welcome email after verification (`true`/`false`)
-
-**Note:** If SMTP is not configured, email verification is skipped and users are auto-verified.
+Without SMTP config, users are auto-verified.
 
 ### Using the binary
 
-1. Download the latest release from [GitHub Releases](https://github.com/davidfolch/apocapoc-api/releases)
-2. Extract the archive:
-   ```bash
-   tar -xzf apocapoc-api_*_linux_amd64.tar.gz
-   ```
-3. Copy `.env.example` to `.env` and configure
-4. Run the binary:
-   ```bash
-   ./apocapoc-api
-   ```
+1. Download from [GitHub Releases](https://github.com/davidfolch/apocapoc-api/releases)
+2. Extract: `tar -xzf apocapoc-api_*_linux_amd64.tar.gz`
+3. Configure: `cp .env.example .env` (edit as needed)
+4. Run: `./apocapoc-api`
 
-The API will be available at `http://localhost:8080`
+API available at `http://localhost:8080`
 
-**Note:** Linux binaries only (amd64 and arm64). For other platforms, use Docker.
+*Note: Linux only (amd64/arm64). Use Docker for other platforms.*
 
 ## Development
 
-### Prerequisites
+**Prerequisites:** Go 1.23+, SQLite, Docker (optional)
 
-- Go 1.23+
-- SQLite
-- Docker (optional)
-
-### Running locally with Docker (Recommended)
-
+**With Docker:**
 ```bash
 cp docker-compose.example.yml docker-compose.yml
 docker-compose up --build
 ```
 
-The API will be available at `http://localhost:8080`
-
-### Running locally with Go
-
+**With Go:**
 ```bash
 cp .env.example .env
 go run cmd/api/main.go
 ```
 
+API runs on `http://localhost:8080`
+
+## Use Cases
+
+Perfect for:
+
+- **Custom mobile/web apps**: Build your own interface without backend complexity
+- **Personal dashboards**: Integrate with Grafana, Nextcloud, or Home Assistant
+- **Automation workflows**: Connect to n8n, Zapier, or custom scripts
+- **Privacy-focused teams**: Keep sensitive productivity data on your infrastructure
+- **API learning projects**: Clean architecture with real-world examples
+- **Offline-first tools**: SQLite backend works without cloud dependencies
+
 ## API Documentation
 
-Once running, visit `http://localhost:8080/api/v1/docs` for interactive Swagger documentation.
+Access the interactive Swagger UI at `http://localhost:8080/api/v1/docs`
+
+Includes endpoint reference, schemas, authentication examples, and live testing.
 
 ## Architecture
 
@@ -155,6 +162,10 @@ This project follows hexagonal (ports & adapters) architecture:
 
 - 📧 Email: contact@apocapoc.app
 - 🐛 Issues: [GitHub Issues](https://github.com/davidfolch/apocapoc-api/issues)
+
+## Keywords
+
+`habit-tracker` `habit-tracking` `rest-api` `self-hosted` `golang` `api` `habits` `productivity` `docker` `sqlite` `hexagonal-architecture` `clean-architecture` `habit-tracker-api` `self-hosted-api` `personal-analytics` `privacy` `open-source`
 
 ## License
 

@@ -18,10 +18,10 @@ type RequestPasswordResetCommand struct {
 }
 
 type RequestPasswordResetHandler struct {
-	userRepo                     repositories.UserRepository
-	passwordResetTokenRepo       repositories.PasswordResetTokenRepository
-	emailService                 services.EmailService
-	appURL                       string
+	userRepo               repositories.UserRepository
+	passwordResetTokenRepo repositories.PasswordResetTokenRepository
+	emailService           services.EmailService
+	appURL                 string
 }
 
 func NewRequestPasswordResetHandler(
