@@ -8,3 +8,5 @@ dist/
 bin/
 .internal-notes/
 docker-compose.yml
+coverage.out
+coverage.txt
