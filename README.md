@@ -1,6 +1,6 @@
 # Apocapoc API - Self-Hosted Habit Tracker
 
-**Lightweight REST API for habit tracking built with Go.** Designed for developers who want full control over their data without relying on third-party services. Deploy in minutes with Docker and start building your own productivity tools.
+REST API for habit tracking built with Go. Self-hosted alternative for developers who want control over their data.
 
 [![Docker](https://img.shields.io/docker/v/ghcr.io/davidfolch/apocapoc-api?label=docker&logo=docker)](https://github.com/davidfolch/apocapoc-api/pkgs/container/apocapoc-api)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/davidfolch/apocapoc-api)](https://golang.org/)
@@ -19,14 +19,13 @@
 
 ## Features
 
-- **Multiple habit types**: Boolean (daily check-ins), Counter (track numbers), Value (measurements)
-- **Flexible scheduling**: Daily, Weekly, Monthly with custom day selection
-- **Statistics endpoints**: Streaks, completion rates, and progress tracking
-- **Complete history**: Full audit trail of all interactions
-- **Easy deployment**: Single Docker container or binary with embedded SQLite
-- **Security**: JWT authentication, rate limiting, optional email verification
-- **Registration modes**: Open or closed for controlled access
-- **Interactive docs**: Built-in Swagger UI for testing endpoints
+- Multiple habit types: Boolean, Counter, Value
+- Flexible scheduling: Daily, Weekly, Monthly
+- Statistics: Streaks, completion rates, progress tracking
+- JWT authentication, rate limiting, optional email verification
+- Registration modes: Open or closed
+- SQLite database (single file)
+- Swagger UI at `/api/v1/docs`
 
 ## Quick Start
 
@@ -134,14 +133,10 @@ API runs on `http://localhost:8080`
 
 ## Use Cases
 
-Perfect for:
-
-- **Custom mobile/web apps**: Build your own interface without backend complexity
-- **Personal dashboards**: Integrate with Grafana, Nextcloud, or Home Assistant
-- **Automation workflows**: Connect to n8n, Zapier, or custom scripts
-- **Privacy-focused teams**: Keep sensitive productivity data on your infrastructure
-- **API learning projects**: Clean architecture with real-world examples
-- **Offline-first tools**: SQLite backend works without cloud dependencies
+- Build your own web or mobile frontend
+- Create custom CLI tools or scripts
+- Keep your habit data on your own infrastructure
+- Experiment with a small REST API in Go
 
 ## API Documentation
 
