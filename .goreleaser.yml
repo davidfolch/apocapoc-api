@@ -9,7 +9,7 @@ builds:
     main: ./cmd/api
     binary: apocapoc-api
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     goos:
       - linux
     goarch:
@@ -17,6 +17,8 @@ builds:
       - arm64
     ldflags:
       - -s -w
+    tags:
+      - sqlite_omit_load_extension
 
 archives:
   - id: apocapoc-api

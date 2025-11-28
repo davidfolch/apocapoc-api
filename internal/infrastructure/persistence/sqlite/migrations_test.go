@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func TestRunMigrations(t *testing.T) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
@@ -32,7 +32,7 @@ func TestRunMigrations(t *testing.T) {
 }
 
 func TestUsersTableSchema(t *testing.T) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestUsersTableSchema(t *testing.T) {
 }
 
 func TestHabitsTableSchema(t *testing.T) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestHabitsTableSchema(t *testing.T) {
 }
 
 func TestHabitEntriesTableSchema(t *testing.T) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestHabitEntriesTableSchema(t *testing.T) {
 }
 
 func TestMigrationsAreIdempotent(t *testing.T) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
