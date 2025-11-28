@@ -10,7 +10,9 @@ Self-hosted habit tracking service with a clean, hexagonal architecture.
 - **Full history tracking**: Complete audit trail of all interactions
 - **Statistics**: Track streaks, completion rates, and progress
 - **Self-hosted first**: Easy deployment with SQLite
-- **Security**: JWT authentication, rate limiting on auth endpoints
+- **Security**: JWT authentication, rate limiting on auth endpoints, optional email verification
+- **Email notifications**: Optional welcome emails and verification emails
+- **Registration control**: Open or closed registration modes
 - **API Documentation**: Interactive Swagger UI
 
 ## Quick Start
@@ -27,11 +29,21 @@ services:
       - "8080:8080"
     environment:
       - DB_PATH=/data/apocapoc.db
+      - PORT=8080
+      - APP_URL=http://localhost:8080
       - JWT_SECRET=YOUR_SECRET_HERE
-      - JWT_EXPIRY=24h
-      - REFRESH_TOKEN_EXPIRY=168h
-      - CORS_ORIGINS=http://localhost:3000
+      - JWT_EXPIRY=1h
+      - REFRESH_TOKEN_EXPIRY=7d
       - DEFAULT_TIMEZONE=UTC
+      - REGISTRATION_MODE=open
+      # Email configuration (optional)
+      # - SMTP_HOST=smtp.example.com
+      # - SMTP_PORT=587
+      # - SMTP_USER=your-email@example.com
+      # - SMTP_PASSWORD=your-password
+      # - SMTP_FROM=noreply@example.com
+      # - SUPPORT_EMAIL=contact@apocapoc.app
+      # - SEND_WELCOME_EMAIL=false
     volumes:
       - habit-data:/data
     restart: unless-stopped
@@ -57,11 +69,33 @@ The API will be available at `http://localhost:8080`
 - `sha-abc123`: Specific commit (for debugging)
 
 **Configuration options:**
+
+**Required:**
 - `JWT_SECRET`: **Required**. Use a long random string
-- `JWT_EXPIRY`: Token expiration (e.g., `24h`, `48h`)
-- `REFRESH_TOKEN_EXPIRY`: Refresh token expiration (e.g., `168h` = 7 days)
-- `CORS_ORIGINS`: Comma-separated list of allowed origins
+- `DB_PATH`: Database file path (default: `./data/apocapoc.db`)
+
+**Application:**
+- `PORT`: HTTP port (default: `8080`)
+- `APP_URL`: Public URL for email links (e.g., `https://habits.yourdomain.com`)
 - `DEFAULT_TIMEZONE`: Timezone for date calculations (e.g., `UTC`, `Europe/Madrid`)
+
+**Authentication:**
+- `JWT_EXPIRY`: Token expiration (e.g., `1h`, `24h`)
+- `REFRESH_TOKEN_EXPIRY`: Refresh token expiration (e.g., `7d`, `168h`)
+
+**Registration:**
+- `REGISTRATION_MODE`: `open` (anyone can register) or `closed` (registration disabled)
+
+**Email (optional - all or none):**
+- `SMTP_HOST`: SMTP server hostname
+- `SMTP_PORT`: SMTP port (`587` for STARTTLS, `465` for SSL)
+- `SMTP_USER`: SMTP username
+- `SMTP_PASSWORD`: SMTP password (use `$$` to escape `$` in passwords)
+- `SMTP_FROM`: From address for emails
+- `SUPPORT_EMAIL`: Support email shown in emails (default: `contact@apocapoc.app`)
+- `SEND_WELCOME_EMAIL`: Send welcome email after verification (`true`/`false`)
+
+**Note:** If SMTP is not configured, email verification is skipped and users are auto-verified.
 
 ### Using the binary
 
