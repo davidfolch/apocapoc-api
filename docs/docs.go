@@ -12,7 +12,8 @@ const docTemplate = `{
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "url": "https://github.com/davidfolch/apocapoc-api"
+            "url": "https://github.com/davidfolch/apocapoc-api",
+            "email": "contact@apocapoc.app"
         },
         "license": {
             "name": "MIT",

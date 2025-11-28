@@ -205,6 +205,7 @@ definitions:
     - HabitTypeValue
 info:
   contact:
+    email: contact@apocapoc.app
     name: API Support
     url: https://github.com/davidfolch/apocapoc-api
   description: Self-hosted habit tracking service

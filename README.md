@@ -117,6 +117,11 @@ This project follows hexagonal (ports & adapters) architecture:
 - `infrastructure/`: External adapters (database, HTTP, etc.)
 - `shared/`: Common utilities and errors
 
+## Support
+
+- 📧 Email: contact@apocapoc.app
+- 🐛 Issues: [GitHub Issues](https://github.com/davidfolch/apocapoc-api/issues)
+
 ## License
 
 MIT

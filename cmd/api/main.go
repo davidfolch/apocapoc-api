@@ -23,6 +23,7 @@ import (
 
 // @contact.name API Support
 // @contact.url https://github.com/davidfolch/apocapoc-api
+// @contact.email contact@apocapoc.app
 
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
