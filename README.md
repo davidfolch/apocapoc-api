@@ -2,7 +2,6 @@
 
 REST API for habit tracking built with Go. Self-hosted alternative for developers who want control over their data.
 
-[![Docker](https://img.shields.io/docker/v/ghcr.io/davidfolch/apocapoc-api?label=docker&logo=docker)](https://github.com/davidfolch/apocapoc-api/pkgs/container/apocapoc-api)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/davidfolch/apocapoc-api)](https://golang.org/)
 [![License](https://img.shields.io/github/license/davidfolch/apocapoc-api)](LICENSE)
 
