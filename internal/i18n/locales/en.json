@@ -46,7 +46,9 @@
     "invalid_token_or_password": "Invalid or expired token, or password requirements not met",
     "failed_reset_password": "Failed to reset password",
     "failed_delete_user": "Failed to delete user",
-    "failed_get_stats": "Failed to get statistics"
+    "failed_get_stats": "Failed to get statistics",
+    "timezone_required": "Timezone is required",
+    "invalid_timezone": "Invalid timezone (must be a valid IANA timezone)"
   },
   "success": {
     "registration_with_verification": "Registration successful. Please check your email to verify your account.",

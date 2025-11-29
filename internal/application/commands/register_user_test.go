@@ -74,7 +74,6 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
 		Password: "Secure123!",
-		Timezone: "UTC",
 	}
 
 	result, err := handler.Handle(context.Background(), cmd)
@@ -96,10 +95,6 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 
 	if createdUser.Email != cmd.Email {
 		t.Errorf("expected email %q, got %q", cmd.Email, createdUser.Email)
-	}
-
-	if createdUser.Timezone != cmd.Timezone {
-		t.Errorf("expected timezone %q, got %q", cmd.Timezone, createdUser.Timezone)
 	}
 }
 
@@ -125,7 +120,6 @@ func TestRegisterUserHandler_InvalidEmail(t *testing.T) {
 			cmd := RegisterUserCommand{
 				Email:    tt.email,
 				Password: "Secure123!",
-				Timezone: "UTC",
 			}
 
 			_, err := handler.Handle(context.Background(), cmd)
@@ -160,38 +154,6 @@ func TestRegisterUserHandler_InvalidPassword(t *testing.T) {
 			cmd := RegisterUserCommand{
 				Email:    "test@example.com",
 				Password: tt.password,
-				Timezone: "UTC",
-			}
-
-			_, err := handler.Handle(context.Background(), cmd)
-			if !errors.Is(err, appErrors.ErrInvalidInput) {
-				t.Errorf("expected ErrInvalidInput, got %v", err)
-			}
-		})
-	}
-}
-
-func TestRegisterUserHandler_InvalidTimezone(t *testing.T) {
-	repo := &mockUserRepo{}
-	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
-
-	tests := []struct {
-		name     string
-		timezone string
-	}{
-		{"empty timezone", ""},
-		{"invalid timezone", "InvalidTimezone"},
-		{"numeric format", "GMT+1"},
-		{"partial timezone", "America"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cmd := RegisterUserCommand{
-				Email:    "test@example.com",
-				Password: "Secure123!",
-				Timezone: tt.timezone,
 			}
 
 			_, err := handler.Handle(context.Background(), cmd)
@@ -203,7 +165,7 @@ func TestRegisterUserHandler_InvalidTimezone(t *testing.T) {
 }
 
 func TestRegisterUserHandler_EmailAlreadyExists(t *testing.T) {
-	existingUser := entities.NewUser("test@example.com", "hashed", "UTC")
+	existingUser := entities.NewUser("test@example.com", "hashed")
 	repo := &mockUserRepo{
 		findByEmailFunc: func(ctx context.Context, email string) (*entities.User, error) {
 			return existingUser, nil
@@ -215,7 +177,6 @@ func TestRegisterUserHandler_EmailAlreadyExists(t *testing.T) {
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
 		Password: "Secure123!",
-		Timezone: "UTC",
 	}
 
 	_, err := handler.Handle(context.Background(), cmd)
@@ -237,7 +198,6 @@ func TestRegisterUserHandler_PasswordHashingError(t *testing.T) {
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
 		Password: "Secure123!",
-		Timezone: "UTC",
 	}
 
 	_, err := handler.Handle(context.Background(), cmd)
@@ -259,7 +219,6 @@ func TestRegisterUserHandler_RepositoryError(t *testing.T) {
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
 		Password: "Secure123!",
-		Timezone: "UTC",
 	}
 
 	_, err := handler.Handle(context.Background(), cmd)
@@ -283,7 +242,6 @@ func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 			RegisterUserCommand{
 				Email:    "user+tag@example.com",
 				Password: "Secure123!",
-				Timezone: "UTC",
 			},
 			nil,
 		},
@@ -292,16 +250,6 @@ func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 			RegisterUserCommand{
 				Email:    "user@mail.example.com",
 				Password: "Secure123!",
-				Timezone: "UTC",
-			},
-			nil,
-		},
-		{
-			"complex timezone",
-			RegisterUserCommand{
-				Email:    "user@example.com",
-				Password: "Secure123!",
-				Timezone: "America/Argentina/Buenos_Aires",
 			},
 			nil,
 		},
@@ -310,7 +258,6 @@ func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 			RegisterUserCommand{
 				Email:    "user@example.com",
 				Password: "Sëcure123!",
-				Timezone: "UTC",
 			},
 			nil,
 		},
@@ -319,7 +266,6 @@ func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 			RegisterUserCommand{
 				Email:    "user@example.com",
 				Password: "ValidP@ss1" + string(make([]byte, 100)),
-				Timezone: "UTC",
 			},
 			nil,
 		},
@@ -342,7 +288,6 @@ func TestRegisterUserHandler_ClosedRegistration(t *testing.T) {
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
 		Password: "Secure123!",
-		Timezone: "UTC",
 	}
 
 	_, err := handler.Handle(context.Background(), cmd)

@@ -24,15 +24,14 @@ func (r *UserRepository) Create(ctx context.Context, user *entities.User) error 
 	user.ID = uuid.New().String()
 
 	query := `
-		INSERT INTO users (id, email, password_hash, timezone, email_verified, email_verification_token, email_verification_expiry, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO users (id, email, password_hash, email_verified, email_verification_token, email_verification_expiry, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	_, err := r.db.ExecContext(ctx, query,
 		user.ID,
 		user.Email,
 		user.PasswordHash,
-		user.Timezone,
 		user.EmailVerified,
 		user.EmailVerificationToken,
 		user.EmailVerificationExpiry,
@@ -52,7 +51,7 @@ func (r *UserRepository) Create(ctx context.Context, user *entities.User) error 
 
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*entities.User, error) {
 	query := `
-		SELECT id, email, password_hash, timezone, email_verified, email_verification_token, email_verification_expiry, created_at, updated_at
+		SELECT id, email, password_hash, email_verified, email_verification_token, email_verification_expiry, created_at, updated_at
 		FROM users
 		WHERE id = ?
 	`
@@ -62,7 +61,6 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (*entities.Use
 		&user.ID,
 		&user.Email,
 		&user.PasswordHash,
-		&user.Timezone,
 		&user.EmailVerified,
 		&user.EmailVerificationToken,
 		&user.EmailVerificationExpiry,
@@ -82,7 +80,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (*entities.Use
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entities.User, error) {
 	query := `
-		SELECT id, email, password_hash, timezone, email_verified, email_verification_token, email_verification_expiry, created_at, updated_at
+		SELECT id, email, password_hash, email_verified, email_verification_token, email_verification_expiry, created_at, updated_at
 		FROM users
 		WHERE email = ?
 	`
@@ -92,7 +90,6 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entiti
 		&user.ID,
 		&user.Email,
 		&user.PasswordHash,
-		&user.Timezone,
 		&user.EmailVerified,
 		&user.EmailVerificationToken,
 		&user.EmailVerificationExpiry,
@@ -112,7 +109,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entiti
 
 func (r *UserRepository) FindByVerificationToken(ctx context.Context, token string) (*entities.User, error) {
 	query := `
-		SELECT id, email, password_hash, timezone, email_verified, email_verification_token, email_verification_expiry, created_at, updated_at
+		SELECT id, email, password_hash, email_verified, email_verification_token, email_verification_expiry, created_at, updated_at
 		FROM users
 		WHERE email_verification_token = ?
 	`
@@ -122,7 +119,6 @@ func (r *UserRepository) FindByVerificationToken(ctx context.Context, token stri
 		&user.ID,
 		&user.Email,
 		&user.PasswordHash,
-		&user.Timezone,
 		&user.EmailVerified,
 		&user.EmailVerificationToken,
 		&user.EmailVerificationExpiry,
@@ -143,14 +139,13 @@ func (r *UserRepository) FindByVerificationToken(ctx context.Context, token stri
 func (r *UserRepository) Update(ctx context.Context, user *entities.User) error {
 	query := `
 		UPDATE users
-		SET email = ?, password_hash = ?, timezone = ?, email_verified = ?, email_verification_token = ?, email_verification_expiry = ?, updated_at = ?
+		SET email = ?, password_hash = ?, email_verified = ?, email_verification_token = ?, email_verification_expiry = ?, updated_at = ?
 		WHERE id = ?
 	`
 
 	result, err := r.db.ExecContext(ctx, query,
 		user.Email,
 		user.PasswordHash,
-		user.Timezone,
 		user.EmailVerified,
 		user.EmailVerificationToken,
 		user.EmailVerificationExpiry,

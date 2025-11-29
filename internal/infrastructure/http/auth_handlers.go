@@ -65,7 +65,6 @@ func NewAuthHandlers(
 type RegisterRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	Timezone string `json:"timezone"`
 }
 
 type LoginRequest struct {
@@ -100,7 +99,7 @@ type LogoutRequest struct {
 // @Produce json
 // @Param request body RegisterRequest true "Registration data (password requires: min 8 chars, uppercase, lowercase, digit, special char)"
 // @Success 201 {object} RegisterResponse "Returns user ID and message about next steps"
-// @Failure 400 {object} ValidationErrorResponse "Invalid input: email format, password requirements, or timezone"
+// @Failure 400 {object} ValidationErrorResponse "Invalid input: email format or password requirements"
 // @Failure 403 {object} ErrorResponse "Registration is closed"
 // @Failure 409 {object} ErrorResponse "Email already registered"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -115,7 +114,6 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 	cmd := commands.RegisterUserCommand{
 		Email:    req.Email,
 		Password: req.Password,
-		Timezone: req.Timezone,
 	}
 
 	result, err := h.registerHandler.Handle(r.Context(), cmd)

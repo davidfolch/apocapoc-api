@@ -98,7 +98,7 @@ func (m *mockResetPasswordHasher) Compare(hashedPassword, password string) error
 }
 
 func TestResetPasswordHandler_Success(t *testing.T) {
-	user := entities.NewUser("test@example.com", "old_hash", "UTC")
+	user := entities.NewUser("test@example.com", "old_hash")
 	user.ID = "user-123"
 
 	resetToken := entities.NewPasswordResetToken(
@@ -340,7 +340,7 @@ func TestResetPasswordHandler_UserNotFound(t *testing.T) {
 }
 
 func TestResetPasswordHandler_HashingError(t *testing.T) {
-	user := entities.NewUser("test@example.com", "old_hash", "UTC")
+	user := entities.NewUser("test@example.com", "old_hash")
 	user.ID = "user-123"
 
 	resetToken := entities.NewPasswordResetToken(

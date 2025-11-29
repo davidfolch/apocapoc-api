@@ -46,7 +46,9 @@
     "invalid_token_or_password": "Token inválido o expirado, o no se cumplen los requisitos de contraseña",
     "failed_reset_password": "Error al restablecer contraseña",
     "failed_delete_user": "Error al eliminar usuario",
-    "failed_get_stats": "Error al obtener estadísticas"
+    "failed_get_stats": "Error al obtener estadísticas",
+    "timezone_required": "La zona horaria es requerida",
+    "invalid_timezone": "Zona horaria inválida (debe ser una zona horaria IANA válida)"
   },
   "success": {
     "registration_with_verification": "Registro exitoso. Por favor revisa tu correo electrónico para verificar tu cuenta.",

@@ -9,7 +9,6 @@ import (
 
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
-	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/shared/errors"
 
@@ -26,7 +25,6 @@ type HabitHandlers struct {
 	archiveHandler         *commands.ArchiveHabitHandler
 	markHandler            *commands.MarkHabitHandler
 	unmarkHandler          *commands.UnmarkHabitHandler
-	userRepo               repositories.UserRepository
 	translator             *i18n.Translator
 }
 
@@ -40,7 +38,6 @@ func NewHabitHandlers(
 	archiveHandler *commands.ArchiveHabitHandler,
 	markHandler *commands.MarkHabitHandler,
 	unmarkHandler *commands.UnmarkHabitHandler,
-	userRepo repositories.UserRepository,
 	translator *i18n.Translator,
 ) *HabitHandlers {
 	return &HabitHandlers{
@@ -53,7 +50,6 @@ func NewHabitHandlers(
 		archiveHandler:         archiveHandler,
 		markHandler:            markHandler,
 		unmarkHandler:          unmarkHandler,
-		userRepo:               userRepo,
 		translator:             translator,
 	}
 }
@@ -440,11 +436,13 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 
 // GetTodaysHabits godoc
 // @Summary Get today's habits
-// @Description Get all habits scheduled for today for the authenticated user. Includes the entry for today if it exists.
+// @Description Get all habits scheduled for today for the authenticated user. Includes the entry for today if it exists. Requires timezone as query parameter (e.g., ?timezone=America/New_York).
 // @Tags habits
 // @Produce json
 // @Security BearerAuth
+// @Param timezone query string true "IANA timezone (e.g., 'America/New_York', 'Europe/Madrid', 'UTC')"
 // @Success 200 {array} TodaysHabitResponse
+// @Failure 400 {object} ErrorResponse "Invalid or missing timezone"
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /habits/today [get]
@@ -455,15 +453,16 @@ func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	user, err := h.userRepo.FindByID(r.Context(), userID)
-	if err != nil {
-		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_get_user")
+	timezone := r.URL.Query().Get("timezone")
+	if timezone == "" {
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "timezone_required")
 		return
 	}
 
-	loc, err := time.LoadLocation(user.Timezone)
+	loc, err := time.LoadLocation(timezone)
 	if err != nil {
-		loc = time.UTC
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_timezone")
+		return
 	}
 
 	today := time.Now().In(loc)
@@ -471,7 +470,7 @@ func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) 
 
 	query := queries.GetTodaysHabitsQuery{
 		UserID:   userID,
-		Timezone: user.Timezone,
+		Timezone: timezone,
 		Date:     todayDate,
 	}
 

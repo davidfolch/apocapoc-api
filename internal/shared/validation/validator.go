@@ -114,16 +114,12 @@ func ValidateTimezone(timezone string) error {
 	return nil
 }
 
-func ValidateRegistration(email, password, timezone string) error {
+func ValidateRegistration(email, password string) error {
 	if err := ValidateEmail(email); err != nil {
 		return err
 	}
 
 	if err := ValidatePassword(password); err != nil {
-		return err
-	}
-
-	if err := ValidateTimezone(timezone); err != nil {
 		return err
 	}
 

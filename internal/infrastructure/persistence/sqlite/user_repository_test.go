@@ -35,7 +35,6 @@ func TestUserRepositoryCreate(t *testing.T) {
 	user := &entities.User{
 		Email:        "test@example.com",
 		PasswordHash: "hashed_password",
-		Timezone:     "UTC",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -60,7 +59,6 @@ func TestUserRepositoryCreateDuplicateEmail(t *testing.T) {
 	user1 := &entities.User{
 		Email:        "duplicate@example.com",
 		PasswordHash: "hash1",
-		Timezone:     "UTC",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -73,7 +71,6 @@ func TestUserRepositoryCreateDuplicateEmail(t *testing.T) {
 	user2 := &entities.User{
 		Email:        "duplicate@example.com",
 		PasswordHash: "hash2",
-		Timezone:     "UTC",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -94,7 +91,6 @@ func TestUserRepositoryFindByID(t *testing.T) {
 	user := &entities.User{
 		Email:        "find@example.com",
 		PasswordHash: "hashed",
-		Timezone:     "America/New_York",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -115,8 +111,6 @@ func TestUserRepositoryFindByID(t *testing.T) {
 	if found.Email != user.Email {
 		t.Errorf("Expected email %s, got %s", user.Email, found.Email)
 	}
-	if found.Timezone != user.Timezone {
-		t.Errorf("Expected timezone %s, got %s", user.Timezone, found.Timezone)
 	}
 }
 
@@ -143,7 +137,6 @@ func TestUserRepositoryFindByEmail(t *testing.T) {
 	user := &entities.User{
 		Email:        "email@test.com",
 		PasswordHash: "hashed",
-		Timezone:     "UTC",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -189,7 +182,6 @@ func TestUserRepositoryUpdate(t *testing.T) {
 	user := &entities.User{
 		Email:        "original@example.com",
 		PasswordHash: "hash1",
-		Timezone:     "UTC",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -200,7 +192,6 @@ func TestUserRepositoryUpdate(t *testing.T) {
 	}
 
 	user.Email = "updated@example.com"
-	user.Timezone = "Europe/Madrid"
 	user.UpdatedAt = time.Now()
 
 	err = repo.Update(ctx, user)
@@ -216,8 +207,6 @@ func TestUserRepositoryUpdate(t *testing.T) {
 	if found.Email != "updated@example.com" {
 		t.Errorf("Expected email updated@example.com, got %s", found.Email)
 	}
-	if found.Timezone != "Europe/Madrid" {
-		t.Errorf("Expected timezone Europe/Madrid, got %s", found.Timezone)
 	}
 }
 
@@ -232,7 +221,6 @@ func TestUserRepositoryUpdateNotFound(t *testing.T) {
 		ID:           "non-existent",
 		Email:        "test@example.com",
 		PasswordHash: "hash",
-		Timezone:     "UTC",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}

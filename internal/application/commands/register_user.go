@@ -17,7 +17,6 @@ import (
 type RegisterUserCommand struct {
 	Email    string
 	Password string
-	Timezone string
 }
 
 type RegisterUserResult struct {
@@ -57,7 +56,7 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 		return nil, errors.ErrRegistrationClosed
 	}
 
-	if err := validation.ValidateRegistration(cmd.Email, cmd.Password, cmd.Timezone); err != nil {
+	if err := validation.ValidateRegistration(cmd.Email, cmd.Password); err != nil {
 		return nil, fmt.Errorf("%w: %v", errors.ErrInvalidInput, err)
 	}
 
@@ -71,7 +70,7 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 		return nil, err
 	}
 
-	user := entities.NewUser(cmd.Email, hashedPassword, cmd.Timezone)
+	user := entities.NewUser(cmd.Email, hashedPassword)
 
 	emailVerificationRequired := false
 	if h.emailService != nil {

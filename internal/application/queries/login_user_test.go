@@ -55,7 +55,7 @@ func (m *mockLoginPasswordHasher) Compare(hashedPassword, password string) error
 }
 
 func TestLoginUserHandler_Success(t *testing.T) {
-	user := entities.NewUser("test@example.com", "hashed_password", "UTC")
+	user := entities.NewUser("test@example.com", "hashed_password")
 	user.ID = "user-123"
 	user.EmailVerified = true
 
@@ -150,7 +150,7 @@ func TestLoginUserHandler_UserNotFound(t *testing.T) {
 }
 
 func TestLoginUserHandler_InvalidPassword(t *testing.T) {
-	user := entities.NewUser("test@example.com", "hashed_password", "UTC")
+	user := entities.NewUser("test@example.com", "hashed_password")
 	user.ID = "user-123"
 	user.EmailVerified = true
 
@@ -180,7 +180,7 @@ func TestLoginUserHandler_InvalidPassword(t *testing.T) {
 }
 
 func TestLoginUserHandler_EmailNotVerified(t *testing.T) {
-	user := entities.NewUser("test@example.com", "hashed_password", "UTC")
+	user := entities.NewUser("test@example.com", "hashed_password")
 	user.ID = "user-123"
 	user.EmailVerified = false
 

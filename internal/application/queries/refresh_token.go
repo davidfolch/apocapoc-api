@@ -17,9 +17,8 @@ type RefreshTokenQuery struct {
 }
 
 type RefreshTokenResult struct {
-	UserID   string
-	Email    string
-	Timezone string
+	UserID string
+	Email  string
 }
 
 type RefreshTokenHandler struct {
@@ -57,9 +56,8 @@ func (h *RefreshTokenHandler) Handle(ctx context.Context, query RefreshTokenQuer
 	}
 
 	return &RefreshTokenResult{
-		UserID:   user.ID,
-		Email:    user.Email,
-		Timezone: user.Timezone,
+		UserID: user.ID,
+		Email:  user.Email,
 	}, nil
 }
 

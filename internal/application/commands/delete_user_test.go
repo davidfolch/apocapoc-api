@@ -48,7 +48,7 @@ func TestDeleteUserHandler_Success(t *testing.T) {
 
 	repo := &mockDeleteUserRepo{
 		findByIDFunc: func(ctx context.Context, id string) (*entities.User, error) {
-			user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+			user := entities.NewUser("test@example.com", "hashedPassword")
 			user.ID = id
 			return user, nil
 		},
@@ -112,7 +112,7 @@ func TestDeleteUserHandler_DeleteError(t *testing.T) {
 
 	repo := &mockDeleteUserRepo{
 		findByIDFunc: func(ctx context.Context, id string) (*entities.User, error) {
-			user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+			user := entities.NewUser("test@example.com", "hashedPassword")
 			user.ID = id
 			return user, nil
 		},

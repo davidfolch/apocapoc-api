@@ -67,7 +67,7 @@ func TestVerifyEmailHandler_Success(t *testing.T) {
 	token := "valid-token"
 	expiry := time.Now().Add(24 * time.Hour)
 
-	user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+	user := entities.NewUser("test@example.com", "hashedPassword")
 	user.ID = "user-123"
 	user.EmailVerified = false
 	user.EmailVerificationToken = &token
@@ -148,7 +148,7 @@ func TestVerifyEmailHandler_AlreadyVerified(t *testing.T) {
 	token := "valid-token"
 	expiry := time.Now().Add(24 * time.Hour)
 
-	user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+	user := entities.NewUser("test@example.com", "hashedPassword")
 	user.ID = "user-123"
 	user.EmailVerified = true
 	user.EmailVerificationToken = &token
@@ -176,7 +176,7 @@ func TestVerifyEmailHandler_ExpiredToken(t *testing.T) {
 	token := "expired-token"
 	expiry := time.Now().Add(-1 * time.Hour)
 
-	user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+	user := entities.NewUser("test@example.com", "hashedPassword")
 	user.ID = "user-123"
 	user.EmailVerified = false
 	user.EmailVerificationToken = &token
@@ -203,7 +203,7 @@ func TestVerifyEmailHandler_ExpiredToken(t *testing.T) {
 func TestVerifyEmailHandler_NilExpiry(t *testing.T) {
 	token := "valid-token"
 
-	user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+	user := entities.NewUser("test@example.com", "hashedPassword")
 	user.ID = "user-123"
 	user.EmailVerified = false
 	user.EmailVerificationToken = &token
@@ -231,7 +231,7 @@ func TestVerifyEmailHandler_WithWelcomeEmail(t *testing.T) {
 	token := "valid-token"
 	expiry := time.Now().Add(24 * time.Hour)
 
-	user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+	user := entities.NewUser("test@example.com", "hashedPassword")
 	user.ID = "user-123"
 	user.EmailVerified = false
 	user.EmailVerificationToken = &token
@@ -277,7 +277,7 @@ func TestVerifyEmailHandler_WithoutWelcomeEmail(t *testing.T) {
 	token := "valid-token"
 	expiry := time.Now().Add(24 * time.Hour)
 
-	user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+	user := entities.NewUser("test@example.com", "hashedPassword")
 	user.ID = "user-123"
 	user.EmailVerified = false
 	user.EmailVerificationToken = &token
@@ -310,7 +310,7 @@ func TestVerifyEmailHandler_UpdateError(t *testing.T) {
 	token := "valid-token"
 	expiry := time.Now().Add(24 * time.Hour)
 
-	user := entities.NewUser("test@example.com", "hashedPassword", "UTC")
+	user := entities.NewUser("test@example.com", "hashedPassword")
 	user.ID = "user-123"
 	user.EmailVerified = false
 	user.EmailVerificationToken = &token

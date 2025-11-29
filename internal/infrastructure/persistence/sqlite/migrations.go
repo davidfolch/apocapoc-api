@@ -25,6 +25,10 @@ func RunMigrations(db *sql.DB) error {
 		return err
 	}
 
+	if err := removeTimezoneColumn(db); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -54,6 +58,23 @@ func addEmailVerificationColumns(db *sql.DB) error {
 	return nil
 }
 
+func removeTimezoneColumn(db *sql.DB) error {
+	exists, err := columnExists(db, "users", "timezone")
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return nil
+	}
+
+	if _, err := db.Exec("ALTER TABLE users DROP COLUMN timezone"); err != nil {
+		return fmt.Errorf("failed to drop timezone column: %w", err)
+	}
+
+	return nil
+}
+
 func columnExists(db *sql.DB, table, column string) (bool, error) {
 	query := fmt.Sprintf("SELECT COUNT(*) FROM pragma_table_info('%s') WHERE name = ?", table)
 	var count int
@@ -69,7 +90,6 @@ CREATE TABLE IF NOT EXISTS users (
 	id TEXT PRIMARY KEY,
 	email TEXT UNIQUE NOT NULL,
 	password_hash TEXT NOT NULL,
-	timezone TEXT DEFAULT 'UTC',
 	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 	updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

@@ -14,9 +14,8 @@ type LoginUserQuery struct {
 }
 
 type LoginUserResult struct {
-	UserID   string
-	Email    string
-	Timezone string
+	UserID string
+	Email  string
 }
 
 type LoginUserHandler struct {
@@ -50,8 +49,7 @@ func (h *LoginUserHandler) Handle(ctx context.Context, query LoginUserQuery) (*L
 	}
 
 	return &LoginUserResult{
-		UserID:   user.ID,
-		Email:    user.Email,
-		Timezone: user.Timezone,
+		UserID: user.ID,
+		Email:  user.Email,
 	}, nil
 }

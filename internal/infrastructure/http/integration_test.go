@@ -70,7 +70,7 @@ func setupTestServer(t *testing.T) *TestServer {
 	translator, _ := i18n.NewTranslator()
 
 	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry, translator)
-	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, userRepo, translator)
+	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, translator)
 	statsHandlers := NewStatsHandlers(getHabitStatsHandler, translator)
 	healthHandlers := NewHealthHandlers(db)
 	userHandlers := NewUserHandlers(deleteUserHandler, translator)

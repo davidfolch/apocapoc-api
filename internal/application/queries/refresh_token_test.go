@@ -80,7 +80,7 @@ func TestRefreshTokenHandler_Success(t *testing.T) {
 
 	userRepo := &mockUserRepositoryForRefresh{
 		findByIDFunc: func(ctx context.Context, id string) (*entities.User, error) {
-			user := entities.NewUser("test@example.com", "hash", "UTC")
+			user := entities.NewUser("test@example.com", "hash")
 			user.ID = id
 			return user, nil
 		},
