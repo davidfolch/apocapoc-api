@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/infrastructure/auth"
 
 	"github.com/go-chi/chi/v5"
@@ -15,15 +16,16 @@ import (
 	_ "apocapoc-api/docs"
 )
 
-func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, healthHandlers *HealthHandlers, userHandlers *UserHandlers, jwtService *auth.JWTService) *chi.Mux {
+func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, healthHandlers *HealthHandlers, userHandlers *UserHandlers, jwtService *auth.JWTService, translator *i18n.Translator) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(i18n.LanguageMiddleware(translator))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{appURL},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language"},
 		AllowCredentials: true,
 	}))
 

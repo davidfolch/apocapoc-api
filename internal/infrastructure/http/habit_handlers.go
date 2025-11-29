@@ -10,6 +10,7 @@ import (
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
 	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/shared/errors"
 
 	"github.com/go-chi/chi/v5"
@@ -26,6 +27,7 @@ type HabitHandlers struct {
 	markHandler            *commands.MarkHabitHandler
 	unmarkHandler          *commands.UnmarkHabitHandler
 	userRepo               repositories.UserRepository
+	translator             *i18n.Translator
 }
 
 func NewHabitHandlers(
@@ -39,6 +41,7 @@ func NewHabitHandlers(
 	markHandler *commands.MarkHabitHandler,
 	unmarkHandler *commands.UnmarkHabitHandler,
 	userRepo repositories.UserRepository,
+	translator *i18n.Translator,
 ) *HabitHandlers {
 	return &HabitHandlers{
 		createHandler:          createHandler,
@@ -51,6 +54,7 @@ func NewHabitHandlers(
 		markHandler:            markHandler,
 		unmarkHandler:          unmarkHandler,
 		userRepo:               userRepo,
+		translator:             translator,
 	}
 }
 
@@ -70,13 +74,13 @@ func NewHabitHandlers(
 func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 	var req CreateHabitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
@@ -99,7 +103,7 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to create habit")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_create_habit")
 		return
 	}
 
@@ -119,7 +123,7 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 func (h *HabitHandlers) GetUserHabits(w http.ResponseWriter, r *http.Request) {
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
@@ -129,7 +133,7 @@ func (h *HabitHandlers) GetUserHabits(w http.ResponseWriter, r *http.Request) {
 
 	habits, err := h.getUserHabitsHandler.Handle(r.Context(), query)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to get habits")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_get_habits")
 		return
 	}
 
@@ -168,7 +172,7 @@ func (h *HabitHandlers) GetHabitByID(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
@@ -180,14 +184,14 @@ func (h *HabitHandlers) GetHabitByID(w http.ResponseWriter, r *http.Request) {
 	habit, err := h.getHabitByIDHandler.Handle(r.Context(), query)
 	if err != nil {
 		if err == errors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "Habit not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "habit_not_found")
 			return
 		}
 		if err == errors.ErrUnauthorized {
-			respondError(w, http.StatusForbidden, "Access denied")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "access_denied")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to get habit")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_get_habit")
 		return
 	}
 
@@ -226,13 +230,13 @@ func (h *HabitHandlers) UpdateHabit(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
 	var req UpdateHabitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -249,18 +253,18 @@ func (h *HabitHandlers) UpdateHabit(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.updateHandler.Handle(r.Context(), cmd); err != nil {
 		if err == errors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "Habit not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "habit_not_found")
 			return
 		}
 		if err == errors.ErrUnauthorized {
-			respondError(w, http.StatusForbidden, "Access denied")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "access_denied")
 			return
 		}
 		if err == errors.ErrInvalidInput {
-			respondError(w, http.StatusBadRequest, "Invalid input")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_input")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to update habit")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_update_habit")
 		return
 	}
 
@@ -285,7 +289,7 @@ func (h *HabitHandlers) ArchiveHabit(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
@@ -296,14 +300,14 @@ func (h *HabitHandlers) ArchiveHabit(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.archiveHandler.Handle(r.Context(), cmd); err != nil {
 		if err == errors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "Habit not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "habit_not_found")
 			return
 		}
 		if err == errors.ErrUnauthorized {
-			respondError(w, http.StatusForbidden, "Access denied")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "access_denied")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to archive habit")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_archive_habit")
 		return
 	}
 
@@ -333,7 +337,7 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
@@ -345,7 +349,7 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 	if fromStr := r.URL.Query().Get("from"); fromStr != "" {
 		from, err := time.Parse("2006-01-02", fromStr)
 		if err != nil {
-			respondError(w, http.StatusBadRequest, "Invalid 'from' date format (use YYYY-MM-DD)")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_from_date_format")
 			return
 		}
 		query.From = &from
@@ -354,7 +358,7 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 	if toStr := r.URL.Query().Get("to"); toStr != "" {
 		to, err := time.Parse("2006-01-02", toStr)
 		if err != nil {
-			respondError(w, http.StatusBadRequest, "Invalid 'to' date format (use YYYY-MM-DD)")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_to_date_format")
 			return
 		}
 		query.To = &to
@@ -375,7 +379,7 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
 		page, err := strconv.Atoi(pageStr)
 		if err != nil || page < 1 {
-			respondError(w, http.StatusBadRequest, "Invalid 'page' parameter")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_page_parameter")
 			return
 		}
 		query.Page = page
@@ -386,7 +390,7 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil || limit < 1 || limit > 100 {
-			respondError(w, http.StatusBadRequest, "Invalid 'limit' parameter (must be 1-100)")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_limit_parameter")
 			return
 		}
 		query.Limit = limit
@@ -402,14 +406,14 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 	result, err := h.getHabitEntriesHandler.Handle(r.Context(), query)
 	if err != nil {
 		if err == errors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "Habit not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "habit_not_found")
 			return
 		}
 		if err == errors.ErrUnauthorized {
-			respondError(w, http.StatusForbidden, "Access denied")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "access_denied")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to get habit entries")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_get_habit_entries")
 		return
 	}
 
@@ -447,13 +451,13 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) {
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
 	user, err := h.userRepo.FindByID(r.Context(), userID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to get user")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_get_user")
 		return
 	}
 
@@ -473,7 +477,7 @@ func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) 
 
 	habits, err := h.getTodaysHandler.Handle(r.Context(), query)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to get habits")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_get_habits")
 		return
 	}
 
@@ -523,13 +527,13 @@ func (h *HabitHandlers) MarkHabit(w http.ResponseWriter, r *http.Request) {
 
 	var req MarkHabitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
 	scheduledDate, err := time.Parse("2006-01-02", req.ScheduledDate)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid date format (use YYYY-MM-DD)")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_date_format")
 		return
 	}
 
@@ -541,14 +545,14 @@ func (h *HabitHandlers) MarkHabit(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.markHandler.Handle(r.Context(), cmd); err != nil {
 		if err == errors.ErrAlreadyExists {
-			respondError(w, http.StatusConflict, "Habit already marked for this date")
+			respondErrorI18n(w, r, h.translator, http.StatusConflict, "habit_already_marked")
 			return
 		}
 		if err == errors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "Habit not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "habit_not_found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to mark habit")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_mark_habit")
 		return
 	}
 
@@ -576,13 +580,13 @@ func (h *HabitHandlers) UnmarkHabit(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
 	scheduledDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid date format (use YYYY-MM-DD)")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_date_format")
 		return
 	}
 
@@ -594,14 +598,14 @@ func (h *HabitHandlers) UnmarkHabit(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.unmarkHandler.Handle(r.Context(), cmd); err != nil {
 		if err == errors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "Habit entry not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "habit_entry_not_found")
 			return
 		}
 		if err == errors.ErrUnauthorized {
-			respondError(w, http.StatusForbidden, "Access denied")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "access_denied")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to unmark habit")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_unmark_habit")
 		return
 	}
 

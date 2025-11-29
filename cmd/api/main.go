@@ -10,6 +10,7 @@ import (
 
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
+	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/infrastructure/auth"
 	"apocapoc-api/internal/infrastructure/config"
 	"apocapoc-api/internal/infrastructure/crypto"
@@ -86,6 +87,11 @@ func main() {
 	refreshTokenRepo := sqlite.NewRefreshTokenRepository(db.Conn())
 	passwordResetTokenRepo := sqlite.NewPasswordResetTokenRepository(db.Conn())
 
+	translator, err := i18n.NewTranslator()
+	if err != nil {
+		log.Fatalf("Failed to create translator: %v", err)
+	}
+
 	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, emailService, cfg.AppURL, cfg.RegistrationMode, sendWelcomeEmail)
 	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
 	refreshTokenHandler := queries.NewRefreshTokenHandler(refreshTokenRepo, userRepo)
@@ -107,13 +113,13 @@ func main() {
 	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
 	unmarkHandler := commands.NewUnmarkHabitHandler(habitRepo, entryRepo)
 
-	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
-	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, userRepo)
-	statsHandlers := httpInfra.NewStatsHandlers(getHabitStatsHandler)
+	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry, translator)
+	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, userRepo, translator)
+	statsHandlers := httpInfra.NewStatsHandlers(getHabitStatsHandler, translator)
 	healthHandlers := httpInfra.NewHealthHandlers(db.Conn())
-	userHandlers := httpInfra.NewUserHandlers(deleteUserHandler)
+	userHandlers := httpInfra.NewUserHandlers(deleteUserHandler, translator)
 
-	router := httpInfra.NewRouter(cfg.AppURL, habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService)
+	router := httpInfra.NewRouter(cfg.AppURL, habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService, translator)
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
 	log.Printf("Server starting on %s", addr)

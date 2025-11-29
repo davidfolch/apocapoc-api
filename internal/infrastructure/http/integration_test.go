@@ -11,6 +11,7 @@ import (
 
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
+	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/infrastructure/auth"
 	"apocapoc-api/internal/infrastructure/crypto"
 	"apocapoc-api/internal/infrastructure/persistence/sqlite"
@@ -66,13 +67,15 @@ func setupTestServer(t *testing.T) *TestServer {
 
 	deleteUserHandler := commands.NewDeleteUserHandler(userRepo)
 
-	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
-	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, userRepo)
-	statsHandlers := NewStatsHandlers(getHabitStatsHandler)
-	healthHandlers := NewHealthHandlers(db)
-	userHandlers := NewUserHandlers(deleteUserHandler)
+	translator, _ := i18n.NewTranslator()
 
-	router := NewRouter("http://localhost:3000", habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService)
+	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry, translator)
+	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, userRepo, translator)
+	statsHandlers := NewStatsHandlers(getHabitStatsHandler, translator)
+	healthHandlers := NewHealthHandlers(db)
+	userHandlers := NewUserHandlers(deleteUserHandler, translator)
+
+	router := NewRouter("http://localhost:3000", habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService, translator)
 
 	handler := http.Handler(router)
 	return &TestServer{

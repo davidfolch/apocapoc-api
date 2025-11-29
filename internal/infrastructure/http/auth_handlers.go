@@ -9,6 +9,7 @@ import (
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
 	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/infrastructure/auth"
 	appErrors "apocapoc-api/internal/shared/errors"
 )
@@ -26,6 +27,7 @@ type AuthHandlers struct {
 	jwtService                     *auth.JWTService
 	refreshTokenRepo               repositories.RefreshTokenRepository
 	refreshTokenExpiry             time.Duration
+	translator                     *i18n.Translator
 }
 
 func NewAuthHandlers(
@@ -41,6 +43,7 @@ func NewAuthHandlers(
 	jwtService *auth.JWTService,
 	refreshTokenRepo repositories.RefreshTokenRepository,
 	refreshTokenExpiry time.Duration,
+	translator *i18n.Translator,
 ) *AuthHandlers {
 	return &AuthHandlers{
 		registerHandler:                registerHandler,
@@ -55,6 +58,7 @@ func NewAuthHandlers(
 		jwtService:                     jwtService,
 		refreshTokenRepo:               refreshTokenRepo,
 		refreshTokenExpiry:             refreshTokenExpiry,
+		translator:                     translator,
 	}
 }
 
@@ -104,7 +108,7 @@ type LogoutRequest struct {
 func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -117,26 +121,27 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 	result, err := h.registerHandler.Handle(r.Context(), cmd)
 	if err != nil {
 		if errors.Is(err, appErrors.ErrInvalidInput) {
-			respondValidationError(w, err)
+			respondValidationErrorI18n(w, r, h.translator, err)
 			return
 		}
 		if err == appErrors.ErrAlreadyExists {
-			respondError(w, http.StatusConflict, "Email already registered")
+			respondErrorI18n(w, r, h.translator, http.StatusConflict, "email_already_registered")
 			return
 		}
 		if err == appErrors.ErrRegistrationClosed {
-			respondError(w, http.StatusForbidden, "Registration is currently closed")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "registration_closed")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to register user")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_register_user")
 		return
 	}
 
+	lang := i18n.GetLanguageFromContext(r.Context())
 	var message string
 	if result.EmailVerificationRequired {
-		message = "Registration successful. Please check your email to verify your account."
+		message = h.translator.Success(lang, "registration_with_verification")
 	} else {
-		message = "Registration successful. You can now login."
+		message = h.translator.Success(lang, "registration_without_verification")
 	}
 
 	respondJSON(w, http.StatusCreated, RegisterResponse{
@@ -161,7 +166,7 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -173,31 +178,31 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 	result, err := h.loginHandler.Handle(r.Context(), query)
 	if err != nil {
 		if err == appErrors.ErrNotFound || err == appErrors.ErrInvalidInput {
-			respondError(w, http.StatusUnauthorized, "Invalid email or password")
+			respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "invalid_credentials")
 			return
 		}
 		if err == appErrors.ErrEmailNotVerified {
-			respondError(w, http.StatusForbidden, "Please verify your email before logging in")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "email_not_verified")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to login")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_login")
 		return
 	}
 
 	token, err := h.jwtService.GenerateToken(result.UserID, result.Email)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to generate token")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_generate_token")
 		return
 	}
 
 	refreshToken, err := queries.CreateRefreshToken(result.UserID, h.refreshTokenExpiry)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to create refresh token")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_create_refresh_token")
 		return
 	}
 
 	if err := h.refreshTokenRepo.Create(r.Context(), refreshToken); err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to save refresh token")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_save_refresh_token")
 		return
 	}
 
@@ -223,7 +228,7 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req RefreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -234,27 +239,27 @@ func (h *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request) {
 	result, err := h.refreshTokenHandler.Handle(r.Context(), query)
 	if err != nil {
 		if err == appErrors.ErrNotFound || err == appErrors.ErrInvalidInput {
-			respondError(w, http.StatusUnauthorized, "Invalid or expired refresh token")
+			respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "invalid_expired_refresh_token")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to refresh token")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_refresh_token")
 		return
 	}
 
 	token, err := h.jwtService.GenerateToken(result.UserID, result.Email)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to generate token")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_generate_token")
 		return
 	}
 
 	newRefreshToken, err := queries.CreateRefreshToken(result.UserID, h.refreshTokenExpiry)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to create refresh token")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_create_refresh_token")
 		return
 	}
 
 	if err := h.refreshTokenRepo.Create(r.Context(), newRefreshToken); err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to save refresh token")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_save_refresh_token")
 		return
 	}
 
@@ -283,7 +288,7 @@ func (h *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
 	var req LogoutRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -294,19 +299,20 @@ func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
 	err := h.revokeTokenHandler.Handle(r.Context(), cmd)
 	if err != nil {
 		if err == appErrors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "Refresh token not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "refresh_token_not_found")
 			return
 		}
 		if err == appErrors.ErrInvalidInput {
-			respondError(w, http.StatusBadRequest, "Invalid refresh token")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_refresh_token")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to revoke token")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_refresh_token")
 		return
 	}
 
+	lang := i18n.GetLanguageFromContext(r.Context())
 	respondJSON(w, http.StatusOK, map[string]string{
-		"message": "Successfully logged out",
+		"message": h.translator.Success(lang, "logged_out"),
 	})
 }
 
@@ -333,7 +339,7 @@ type ResendVerificationRequest struct {
 func (h *AuthHandlers) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	var req VerifyEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -344,19 +350,20 @@ func (h *AuthHandlers) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	err := h.verifyEmailHandler.Handle(r.Context(), cmd)
 	if err != nil {
 		if err == appErrors.ErrInvalidInput {
-			respondError(w, http.StatusBadRequest, "Invalid or expired verification token")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_expired_verification_token")
 			return
 		}
 		if err == appErrors.ErrAlreadyExists {
-			respondError(w, http.StatusConflict, "Email already verified")
+			respondErrorI18n(w, r, h.translator, http.StatusConflict, "email_already_verified")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to verify email")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_verify_email")
 		return
 	}
 
+	lang := i18n.GetLanguageFromContext(r.Context())
 	respondJSON(w, http.StatusOK, map[string]string{
-		"message": "Email verified successfully",
+		"message": h.translator.Success(lang, "email_verified"),
 	})
 }
 
@@ -376,7 +383,7 @@ func (h *AuthHandlers) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandlers) ResendVerification(w http.ResponseWriter, r *http.Request) {
 	var req ResendVerificationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -387,23 +394,24 @@ func (h *AuthHandlers) ResendVerification(w http.ResponseWriter, r *http.Request
 	err := h.resendVerificationEmailHandler.Handle(r.Context(), cmd)
 	if err != nil {
 		if err == appErrors.ErrInvalidInput {
-			respondError(w, http.StatusBadRequest, "Invalid email")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_email")
 			return
 		}
 		if err == appErrors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "User not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "user_not_found")
 			return
 		}
 		if err == appErrors.ErrAlreadyExists {
-			respondError(w, http.StatusConflict, "Email already verified")
+			respondErrorI18n(w, r, h.translator, http.StatusConflict, "email_already_verified")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to send verification email")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_send_verification_email")
 		return
 	}
 
+	lang := i18n.GetLanguageFromContext(r.Context())
 	respondJSON(w, http.StatusOK, map[string]string{
-		"message": "Verification email sent successfully",
+		"message": h.translator.Success(lang, "verification_email_sent"),
 	})
 }
 
@@ -432,7 +440,7 @@ type ResetPasswordRequest struct {
 func (h *AuthHandlers) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var req ForgotPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -443,23 +451,24 @@ func (h *AuthHandlers) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	err := h.requestPasswordResetHandler.Handle(r.Context(), cmd)
 	if err != nil {
 		if err == appErrors.ErrInvalidInput {
-			respondError(w, http.StatusBadRequest, "Invalid email")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_email")
 			return
 		}
 		if err == appErrors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "User not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "user_not_found")
 			return
 		}
 		if err == appErrors.ErrEmailNotVerified {
-			respondError(w, http.StatusForbidden, "Please verify your email before resetting password")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "email_not_verified_reset")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to send reset email")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_send_reset_email")
 		return
 	}
 
+	lang := i18n.GetLanguageFromContext(r.Context())
 	respondJSON(w, http.StatusOK, map[string]string{
-		"message": "Password reset email sent successfully",
+		"message": h.translator.Success(lang, "password_reset_email_sent"),
 	})
 }
 
@@ -478,7 +487,7 @@ func (h *AuthHandlers) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req ResetPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
+		respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_request_body")
 		return
 	}
 
@@ -490,18 +499,19 @@ func (h *AuthHandlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	err := h.resetPasswordHandler.Handle(r.Context(), cmd)
 	if err != nil {
 		if err == appErrors.ErrInvalidInput {
-			respondError(w, http.StatusBadRequest, "Invalid or expired token, or password requirements not met")
+			respondErrorI18n(w, r, h.translator, http.StatusBadRequest, "invalid_token_or_password")
 			return
 		}
 		if err == appErrors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "User not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "user_not_found")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to reset password")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_reset_password")
 		return
 	}
 
+	lang := i18n.GetLanguageFromContext(r.Context())
 	respondJSON(w, http.StatusOK, map[string]string{
-		"message": "Password reset successfully",
+		"message": h.translator.Success(lang, "password_reset"),
 	})
 }

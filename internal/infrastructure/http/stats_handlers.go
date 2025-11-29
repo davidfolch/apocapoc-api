@@ -6,18 +6,22 @@ import (
 	"apocapoc-api/internal/application/queries"
 	"apocapoc-api/internal/shared/errors"
 
+	"apocapoc-api/internal/i18n"
 	"github.com/go-chi/chi/v5"
 )
 
 type StatsHandlers struct {
 	getHabitStatsHandler *queries.GetHabitStatsHandler
+	translator           *i18n.Translator
 }
 
 func NewStatsHandlers(
 	getHabitStatsHandler *queries.GetHabitStatsHandler,
+	translator *i18n.Translator,
 ) *StatsHandlers {
 	return &StatsHandlers{
 		getHabitStatsHandler: getHabitStatsHandler,
+		translator:           translator,
 	}
 }
 
@@ -39,7 +43,7 @@ func (h *StatsHandlers) GetHabitStats(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
-		respondError(w, http.StatusUnauthorized, "User not authenticated")
+		respondErrorI18n(w, r, h.translator, http.StatusUnauthorized, "user_not_authenticated")
 		return
 	}
 
@@ -51,14 +55,14 @@ func (h *StatsHandlers) GetHabitStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.getHabitStatsHandler.Handle(r.Context(), query)
 	if err != nil {
 		if err == errors.ErrNotFound {
-			respondError(w, http.StatusNotFound, "Habit not found")
+			respondErrorI18n(w, r, h.translator, http.StatusNotFound, "habit_not_found")
 			return
 		}
 		if err == errors.ErrUnauthorized {
-			respondError(w, http.StatusForbidden, "Access denied")
+			respondErrorI18n(w, r, h.translator, http.StatusForbidden, "access_denied")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "Failed to get habit stats")
+		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_get_stats")
 		return
 	}
 
