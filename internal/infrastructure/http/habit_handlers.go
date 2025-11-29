@@ -9,6 +9,7 @@ import (
 
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
+	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/shared/errors"
 
 	"github.com/go-chi/chi/v5"
@@ -24,6 +25,7 @@ type HabitHandlers struct {
 	archiveHandler         *commands.ArchiveHabitHandler
 	markHandler            *commands.MarkHabitHandler
 	unmarkHandler          *commands.UnmarkHabitHandler
+	userRepo               repositories.UserRepository
 }
 
 func NewHabitHandlers(
@@ -36,6 +38,7 @@ func NewHabitHandlers(
 	archiveHandler *commands.ArchiveHabitHandler,
 	markHandler *commands.MarkHabitHandler,
 	unmarkHandler *commands.UnmarkHabitHandler,
+	userRepo repositories.UserRepository,
 ) *HabitHandlers {
 	return &HabitHandlers{
 		createHandler:          createHandler,
@@ -47,6 +50,7 @@ func NewHabitHandlers(
 		archiveHandler:         archiveHandler,
 		markHandler:            markHandler,
 		unmarkHandler:          unmarkHandler,
+		userRepo:               userRepo,
 	}
 }
 
@@ -432,7 +436,7 @@ func (h *HabitHandlers) GetHabitEntries(w http.ResponseWriter, r *http.Request) 
 
 // GetTodaysHabits godoc
 // @Summary Get today's habits
-// @Description Get all habits scheduled for today for the authenticated user
+// @Description Get all habits scheduled for today for the authenticated user. Includes the entry for today if it exists.
 // @Tags habits
 // @Produce json
 // @Security BearerAuth
@@ -447,12 +451,24 @@ func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	timezone := "UTC"
+	user, err := h.userRepo.FindByID(r.Context(), userID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to get user")
+		return
+	}
+
+	loc, err := time.LoadLocation(user.Timezone)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	today := time.Now().In(loc)
+	todayDate := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC)
 
 	query := queries.GetTodaysHabitsQuery{
 		UserID:   userID,
-		Timezone: timezone,
-		Date:     time.Now().UTC(),
+		Timezone: user.Timezone,
+		Date:     todayDate,
 	}
 
 	habits, err := h.getTodaysHandler.Handle(r.Context(), query)
@@ -463,6 +479,15 @@ func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) 
 
 	response := make([]TodaysHabitResponse, len(habits))
 	for i, habit := range habits {
+		var entryResponse *TodaysHabitEntryResponse
+		if habit.Entry != nil {
+			entryResponse = &TodaysHabitEntryResponse{
+				ID:          habit.Entry.ID,
+				Value:       habit.Entry.Value,
+				CompletedAt: habit.Entry.CompletedAt,
+			}
+		}
+
 		response[i] = TodaysHabitResponse{
 			ID:            habit.ID,
 			Name:          habit.Name,
@@ -471,6 +496,7 @@ func (h *HabitHandlers) GetTodaysHabits(w http.ResponseWriter, r *http.Request) 
 			IsNegative:    habit.IsNegative,
 			ScheduledDate: habit.ScheduledDate,
 			IsCarriedOver: habit.IsCarriedOver,
+			Entry:         entryResponse,
 		}
 	}
 

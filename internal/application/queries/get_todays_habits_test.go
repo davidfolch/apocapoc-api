@@ -107,6 +107,10 @@ func TestGetTodaysHabitsHandler_DailyHabitNoEntries(t *testing.T) {
 	if results[0].IsCarriedOver {
 		t.Error("Expected IsCarriedOver to be false")
 	}
+
+	if results[0].Entry != nil {
+		t.Error("Expected entry to be nil when no entry exists")
+	}
 }
 
 func TestGetTodaysHabitsHandler_DailyHabitAlreadyCompleted(t *testing.T) {
@@ -115,6 +119,7 @@ func TestGetTodaysHabitsHandler_DailyHabitAlreadyCompleted(t *testing.T) {
 
 	targetDate := time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC)
 	entry := entities.NewHabitEntry("habit-1", targetDate, nil)
+	entry.ID = "entry-1"
 
 	habitRepo := &mockHabitRepo{habits: []*entities.Habit{habit}}
 	entryRepo := &mockEntryRepo{entries: []*entities.HabitEntry{entry}}
@@ -133,8 +138,61 @@ func TestGetTodaysHabitsHandler_DailyHabitAlreadyCompleted(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if len(results) != 0 {
-		t.Fatalf("Expected 0 habits (already completed), got %d", len(results))
+	if len(results) != 1 {
+		t.Fatalf("Expected 1 habit (with entry), got %d", len(results))
+	}
+
+	if results[0].Entry == nil {
+		t.Fatal("Expected entry to be present")
+	}
+
+	if results[0].Entry.ID != "entry-1" {
+		t.Errorf("Expected entry ID entry-1, got %s", results[0].Entry.ID)
+	}
+}
+
+func TestGetTodaysHabitsHandler_HabitWithValueEntry(t *testing.T) {
+	habit := entities.NewHabit("user-123", "Water", value_objects.HabitTypeValue, value_objects.FrequencyDaily, false, false)
+	habit.ID = "habit-1"
+	targetValue := 2000.0
+	habit.TargetValue = &targetValue
+
+	targetDate := time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC)
+	value := 1500.0
+	entry := entities.NewHabitEntry("habit-1", targetDate, &value)
+	entry.ID = "entry-1"
+
+	habitRepo := &mockHabitRepo{habits: []*entities.Habit{habit}}
+	entryRepo := &mockEntryRepo{entries: []*entities.HabitEntry{entry}}
+
+	handler := NewGetTodaysHabitsHandler(habitRepo, entryRepo)
+
+	query := GetTodaysHabitsQuery{
+		UserID:   "user-123",
+		Timezone: "UTC",
+		Date:     targetDate,
+	}
+
+	results, err := handler.Handle(context.Background(), query)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Fatalf("Expected 1 habit, got %d", len(results))
+	}
+
+	if results[0].Entry == nil {
+		t.Fatal("Expected entry to be present")
+	}
+
+	if results[0].Entry.Value == nil {
+		t.Fatal("Expected entry value to be present")
+	}
+
+	if *results[0].Entry.Value != 1500.0 {
+		t.Errorf("Expected entry value 1500.0, got %f", *results[0].Entry.Value)
 	}
 }
 

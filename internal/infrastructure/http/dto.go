@@ -48,14 +48,21 @@ type MarkHabitRequest struct {
 	Value         *float64 `json:"value,omitempty"`
 }
 
+type TodaysHabitEntryResponse struct {
+	ID          string    `json:"id"`
+	Value       *float64  `json:"value,omitempty"`
+	CompletedAt time.Time `json:"completed_at"`
+}
+
 type TodaysHabitResponse struct {
-	ID            string                  `json:"id"`
-	Name          string                  `json:"name"`
-	Type          value_objects.HabitType `json:"type"`
-	TargetValue   *float64                `json:"target_value,omitempty"`
-	IsNegative    bool                    `json:"is_negative"`
-	ScheduledDate time.Time               `json:"scheduled_date"`
-	IsCarriedOver bool                    `json:"is_carried_over"`
+	ID            string                     `json:"id"`
+	Name          string                     `json:"name"`
+	Type          value_objects.HabitType    `json:"type"`
+	TargetValue   *float64                   `json:"target_value,omitempty"`
+	IsNegative    bool                       `json:"is_negative"`
+	ScheduledDate time.Time                  `json:"scheduled_date"`
+	IsCarriedOver bool                       `json:"is_carried_over"`
+	Entry         *TodaysHabitEntryResponse  `json:"entry,omitempty"`
 }
 
 type UserHabitResponse struct {

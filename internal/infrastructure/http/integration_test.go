@@ -67,7 +67,7 @@ func setupTestServer(t *testing.T) *TestServer {
 	deleteUserHandler := commands.NewDeleteUserHandler(userRepo)
 
 	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
-	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
+	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, userRepo)
 	statsHandlers := NewStatsHandlers(getHabitStatsHandler)
 	healthHandlers := NewHealthHandlers(db)
 	userHandlers := NewUserHandlers(deleteUserHandler)

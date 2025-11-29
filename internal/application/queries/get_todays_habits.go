@@ -9,6 +9,12 @@ import (
 	"apocapoc-api/internal/shared/utils"
 )
 
+type TodaysHabitEntryDTO struct {
+	ID          string
+	Value       *float64
+	CompletedAt time.Time
+}
+
 type TodaysHabitDTO struct {
 	ID            string
 	Name          string
@@ -17,6 +23,7 @@ type TodaysHabitDTO struct {
 	IsNegative    bool
 	ScheduledDate time.Time
 	IsCarriedOver bool
+	Entry         *TodaysHabitEntryDTO
 }
 
 type GetTodaysHabitsQuery struct {
@@ -66,29 +73,29 @@ func (h *GetTodaysHabitsHandler) Handle(
 		entries, _ := h.entryRepo.FindByHabitIDAndDateRange(
 			ctx,
 			habit.ID,
-			query.Date.AddDate(0, 0, -30),
+			query.Date,
 			query.Date,
 		)
 
-		isCompleted := false
-		for _, entry := range entries {
-			if entry.ScheduledDate.Equal(query.Date) {
-				isCompleted = true
-				break
+		var entryDTO *TodaysHabitEntryDTO
+		if len(entries) > 0 && entries[0].ScheduledDate.Format("2006-01-02") == query.Date.Format("2006-01-02") {
+			entryDTO = &TodaysHabitEntryDTO{
+				ID:          entries[0].ID,
+				Value:       entries[0].Value,
+				CompletedAt: entries[0].CompletedAt,
 			}
 		}
 
-		if !isCompleted {
-			result = append(result, TodaysHabitDTO{
-				ID:            habit.ID,
-				Name:          habit.Name,
-				Type:          habit.Type,
-				TargetValue:   habit.TargetValue,
-				IsNegative:    habit.IsNegative,
-				ScheduledDate: query.Date,
-				IsCarriedOver: !shouldAppear && habit.CarryOver,
-			})
-		}
+		result = append(result, TodaysHabitDTO{
+			ID:            habit.ID,
+			Name:          habit.Name,
+			Type:          habit.Type,
+			TargetValue:   habit.TargetValue,
+			IsNegative:    habit.IsNegative,
+			ScheduledDate: query.Date,
+			IsCarriedOver: !shouldAppear && habit.CarryOver,
+			Entry:         entryDTO,
+		})
 	}
 
 	return result, nil

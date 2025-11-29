@@ -108,7 +108,7 @@ func main() {
 	unmarkHandler := commands.NewUnmarkHabitHandler(habitRepo, entryRepo)
 
 	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry)
-	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler)
+	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, userRepo)
 	statsHandlers := httpInfra.NewStatsHandlers(getHabitStatsHandler)
 	healthHandlers := httpInfra.NewHealthHandlers(db.Conn())
 	userHandlers := httpInfra.NewUserHandlers(deleteUserHandler)
