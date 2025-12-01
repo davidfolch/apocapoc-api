@@ -3,8 +3,10 @@ package queries
 import (
 	"context"
 
+	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/domain/value_objects"
+	"apocapoc-api/internal/shared/pagination"
 )
 
 type HabitDTO struct {
@@ -19,7 +21,13 @@ type HabitDTO struct {
 }
 
 type GetUserHabitsQuery struct {
-	UserID string
+	UserID           string
+	PaginationParams *pagination.Params
+}
+
+type GetUserHabitsResult struct {
+	Habits     []HabitDTO
+	Pagination *pagination.Response
 }
 
 type GetUserHabitsHandler struct {
@@ -32,15 +40,34 @@ func NewGetUserHabitsHandler(habitRepo repositories.HabitRepository) *GetUserHab
 	}
 }
 
-func (h *GetUserHabitsHandler) Handle(ctx context.Context, query GetUserHabitsQuery) ([]HabitDTO, error) {
-	habits, err := h.habitRepo.FindActiveByUserID(ctx, query.UserID)
-	if err != nil {
-		return nil, err
+func (h *GetUserHabitsHandler) Handle(ctx context.Context, query GetUserHabitsQuery) (*GetUserHabitsResult, error) {
+	var habits []*entities.Habit
+	var paginationResponse *pagination.Response
+	var err error
+
+	if query.PaginationParams != nil {
+		habits, err = h.habitRepo.FindActiveByUserIDWithPagination(ctx, query.UserID, *query.PaginationParams)
+		if err != nil {
+			return nil, err
+		}
+
+		totalItems, err := h.habitRepo.CountActiveByUserID(ctx, query.UserID)
+		if err != nil {
+			return nil, err
+		}
+
+		response := pagination.NewResponse(*query.PaginationParams, totalItems)
+		paginationResponse = &response
+	} else {
+		habits, err = h.habitRepo.FindActiveByUserID(ctx, query.UserID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	var result []HabitDTO
+	var habitDTOs []HabitDTO
 	for _, habit := range habits {
-		result = append(result, HabitDTO{
+		habitDTOs = append(habitDTOs, HabitDTO{
 			ID:           habit.ID,
 			Name:         habit.Name,
 			Type:         habit.Type,
@@ -52,5 +79,8 @@ func (h *GetUserHabitsHandler) Handle(ctx context.Context, query GetUserHabitsQu
 		})
 	}
 
-	return result, nil
+	return &GetUserHabitsResult{
+		Habits:     habitDTOs,
+		Pagination: paginationResponse,
+	}, nil
 }

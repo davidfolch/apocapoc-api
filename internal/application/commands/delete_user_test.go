@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 
@@ -131,4 +132,12 @@ func TestDeleteUserHandler_DeleteError(t *testing.T) {
 	if err != customError {
 		t.Errorf("Handle() error = %v, want %v", err, customError)
 	}
+}
+
+func (m *mockDeleteUserRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockDeleteUserRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 
@@ -228,4 +229,12 @@ func TestCreateHabitHandler_NegativeHabit(t *testing.T) {
 	if habitID == "" {
 		t.Error("Expected habit ID to be returned")
 	}
+}
+
+func (m *mockHabitRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockHabitRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

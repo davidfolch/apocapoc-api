@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 	"time"
@@ -265,4 +266,20 @@ func TestCreateRefreshToken_MultipleCalls(t *testing.T) {
 	if token1.UserID == token2.UserID {
 		t.Error("UserIDs should be different")
 	}
+}
+
+func (m *mockRefreshTokenRepository) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockRefreshTokenRepository) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
+}
+
+func (m *mockUserRepositoryForRefresh) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockUserRepositoryForRefresh) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

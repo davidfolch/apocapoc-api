@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"apocapoc-api/internal/domain/value_objects"
+	"apocapoc-api/internal/shared/pagination"
 )
 
 type CreateHabitRequest struct {
@@ -74,6 +75,11 @@ type UserHabitResponse struct {
 	TargetValue  *float64                `json:"target_value,omitempty"`
 	CarryOver    bool                    `json:"carry_over"`
 	IsNegative   bool                    `json:"is_negative"`
+}
+
+type GetUserHabitsResponse struct {
+	Data       []UserHabitResponse  `json:"data"`
+	Pagination *pagination.Response `json:"pagination,omitempty"`
 }
 
 type HabitEntryResponse struct {

@@ -6,7 +6,56 @@ import (
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/value_objects"
+	"apocapoc-api/internal/shared/pagination"
 )
+
+type mockGetUserHabitsRepo struct {
+	habits []*entities.Habit
+}
+
+func (m *mockGetUserHabitsRepo) Create(ctx context.Context, habit *entities.Habit) error {
+	return nil
+}
+
+func (m *mockGetUserHabitsRepo) FindByID(ctx context.Context, id string) (*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockGetUserHabitsRepo) FindByUserID(ctx context.Context, userID string) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockGetUserHabitsRepo) FindActiveByUserID(ctx context.Context, userID string) ([]*entities.Habit, error) {
+	return m.habits, nil
+}
+
+func (m *mockGetUserHabitsRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	offset := params.Offset()
+	limit := params.Limit()
+
+	if offset >= len(m.habits) {
+		return []*entities.Habit{}, nil
+	}
+
+	end := offset + limit
+	if end > len(m.habits) {
+		end = len(m.habits)
+	}
+
+	return m.habits[offset:end], nil
+}
+
+func (m *mockGetUserHabitsRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return len(m.habits), nil
+}
+
+func (m *mockGetUserHabitsRepo) Update(ctx context.Context, habit *entities.Habit) error {
+	return nil
+}
+
+func (m *mockGetUserHabitsRepo) Delete(ctx context.Context, id string) error {
+	return nil
+}
 
 func TestGetUserHabitsHandler_ReturnsAllActiveHabits(t *testing.T) {
 	habit1 := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
@@ -15,7 +64,7 @@ func TestGetUserHabitsHandler_ReturnsAllActiveHabits(t *testing.T) {
 	habit2 := entities.NewHabit("user-123", "Read", value_objects.HabitTypeBoolean, value_objects.FrequencyWeekly, false, false)
 	habit2.ID = "habit-2"
 
-	habitRepo := &mockHabitRepo{habits: []*entities.Habit{habit1, habit2}}
+	habitRepo := &mockGetUserHabitsRepo{habits: []*entities.Habit{habit1, habit2}}
 
 	handler := NewGetUserHabitsHandler(habitRepo)
 
@@ -23,27 +72,31 @@ func TestGetUserHabitsHandler_ReturnsAllActiveHabits(t *testing.T) {
 		UserID: "user-123",
 	}
 
-	results, err := handler.Handle(context.Background(), query)
+	result, err := handler.Handle(context.Background(), query)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if len(results) != 2 {
-		t.Fatalf("Expected 2 habits, got %d", len(results))
+	if len(result.Habits) != 2 {
+		t.Fatalf("Expected 2 habits, got %d", len(result.Habits))
 	}
 
-	if results[0].ID != "habit-1" {
-		t.Errorf("Expected first habit ID habit-1, got %s", results[0].ID)
+	if result.Habits[0].ID != "habit-1" {
+		t.Errorf("Expected first habit ID habit-1, got %s", result.Habits[0].ID)
 	}
 
-	if results[1].ID != "habit-2" {
-		t.Errorf("Expected second habit ID habit-2, got %s", results[1].ID)
+	if result.Habits[1].ID != "habit-2" {
+		t.Errorf("Expected second habit ID habit-2, got %s", result.Habits[1].ID)
+	}
+
+	if result.Pagination != nil {
+		t.Error("Expected no pagination when not requested")
 	}
 }
 
 func TestGetUserHabitsHandler_ReturnsEmptyListForUserWithNoHabits(t *testing.T) {
-	habitRepo := &mockHabitRepo{habits: []*entities.Habit{}}
+	habitRepo := &mockGetUserHabitsRepo{habits: []*entities.Habit{}}
 
 	handler := NewGetUserHabitsHandler(habitRepo)
 
@@ -51,14 +104,14 @@ func TestGetUserHabitsHandler_ReturnsEmptyListForUserWithNoHabits(t *testing.T) 
 		UserID: "user-456",
 	}
 
-	results, err := handler.Handle(context.Background(), query)
+	result, err := handler.Handle(context.Background(), query)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if len(results) != 0 {
-		t.Fatalf("Expected 0 habits, got %d", len(results))
+	if len(result.Habits) != 0 {
+		t.Fatalf("Expected 0 habits, got %d", len(result.Habits))
 	}
 }
 
@@ -68,7 +121,7 @@ func TestGetUserHabitsHandler_IncludesAllHabitFields(t *testing.T) {
 	habit.ID = "habit-1"
 	habit.TargetValue = &targetValue
 
-	habitRepo := &mockHabitRepo{habits: []*entities.Habit{habit}}
+	habitRepo := &mockGetUserHabitsRepo{habits: []*entities.Habit{habit}}
 
 	handler := NewGetUserHabitsHandler(habitRepo)
 
@@ -76,35 +129,151 @@ func TestGetUserHabitsHandler_IncludesAllHabitFields(t *testing.T) {
 		UserID: "user-123",
 	}
 
-	results, err := handler.Handle(context.Background(), query)
+	result, err := handler.Handle(context.Background(), query)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if len(results) != 1 {
-		t.Fatalf("Expected 1 habit, got %d", len(results))
+	if len(result.Habits) != 1 {
+		t.Fatalf("Expected 1 habit, got %d", len(result.Habits))
 	}
 
-	result := results[0]
+	habitDTO := result.Habits[0]
 
-	if result.Name != "Drink Water" {
-		t.Errorf("Expected name 'Drink Water', got %s", result.Name)
+	if habitDTO.Name != "Drink Water" {
+		t.Errorf("Expected name 'Drink Water', got %s", habitDTO.Name)
 	}
 
-	if result.Type != value_objects.HabitTypeValue {
-		t.Errorf("Expected type %s, got %s", value_objects.HabitTypeValue, result.Type)
+	if habitDTO.Type != value_objects.HabitTypeValue {
+		t.Errorf("Expected type %s, got %s", value_objects.HabitTypeValue, habitDTO.Type)
 	}
 
-	if result.Frequency != value_objects.FrequencyDaily {
-		t.Errorf("Expected frequency %s, got %s", value_objects.FrequencyDaily, result.Frequency)
+	if habitDTO.Frequency != value_objects.FrequencyDaily {
+		t.Errorf("Expected frequency %s, got %s", value_objects.FrequencyDaily, habitDTO.Frequency)
 	}
 
-	if result.TargetValue == nil || *result.TargetValue != 5.0 {
-		t.Errorf("Expected target value 5.0, got %v", result.TargetValue)
+	if habitDTO.TargetValue == nil || *habitDTO.TargetValue != 5.0 {
+		t.Errorf("Expected target value 5.0, got %v", habitDTO.TargetValue)
 	}
 
-	if !result.CarryOver {
+	if !habitDTO.CarryOver {
 		t.Error("Expected carry over to be true")
 	}
+}
+
+func TestGetUserHabitsHandler_WithPagination(t *testing.T) {
+	var habits []*entities.Habit
+	for i := 1; i <= 10; i++ {
+		habit := entities.NewHabit("user-123", "Habit", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
+		habit.ID = "habit-" + string(rune(i+'0'))
+		habits = append(habits, habit)
+	}
+
+	habitRepo := &mockGetUserHabitsRepo{habits: habits}
+	handler := NewGetUserHabitsHandler(habitRepo)
+
+	t.Run("FirstPage", func(t *testing.T) {
+		params := pagination.NewParams(1, 5)
+		query := GetUserHabitsQuery{
+			UserID:           "user-123",
+			PaginationParams: &params,
+		}
+
+		result, err := handler.Handle(context.Background(), query)
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(result.Habits) != 5 {
+			t.Errorf("Expected 5 habits on first page, got %d", len(result.Habits))
+		}
+
+		if result.Pagination == nil {
+			t.Fatal("Expected pagination metadata")
+		}
+
+		if result.Pagination.Page != 1 {
+			t.Errorf("Expected page 1, got %d", result.Pagination.Page)
+		}
+
+		if result.Pagination.PageSize != 5 {
+			t.Errorf("Expected page_size 5, got %d", result.Pagination.PageSize)
+		}
+
+		if result.Pagination.TotalItems != 10 {
+			t.Errorf("Expected total_items 10, got %d", result.Pagination.TotalItems)
+		}
+
+		if result.Pagination.TotalPages != 2 {
+			t.Errorf("Expected total_pages 2, got %d", result.Pagination.TotalPages)
+		}
+	})
+
+	t.Run("SecondPage", func(t *testing.T) {
+		params := pagination.NewParams(2, 5)
+		query := GetUserHabitsQuery{
+			UserID:           "user-123",
+			PaginationParams: &params,
+		}
+
+		result, err := handler.Handle(context.Background(), query)
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(result.Habits) != 5 {
+			t.Errorf("Expected 5 habits on second page, got %d", len(result.Habits))
+		}
+
+		if result.Pagination.Page != 2 {
+			t.Errorf("Expected page 2, got %d", result.Pagination.Page)
+		}
+	})
+
+	t.Run("PageBeyondTotal", func(t *testing.T) {
+		params := pagination.NewParams(10, 5)
+		query := GetUserHabitsQuery{
+			UserID:           "user-123",
+			PaginationParams: &params,
+		}
+
+		result, err := handler.Handle(context.Background(), query)
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(result.Habits) != 0 {
+			t.Errorf("Expected 0 habits beyond total, got %d", len(result.Habits))
+		}
+	})
+
+	t.Run("CustomPageSize", func(t *testing.T) {
+		params := pagination.NewParams(1, 3)
+		query := GetUserHabitsQuery{
+			UserID:           "user-123",
+			PaginationParams: &params,
+		}
+
+		result, err := handler.Handle(context.Background(), query)
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(result.Habits) != 3 {
+			t.Errorf("Expected 3 habits with page_size=3, got %d", len(result.Habits))
+		}
+
+		if result.Pagination.PageSize != 3 {
+			t.Errorf("Expected page_size 3, got %d", result.Pagination.PageSize)
+		}
+
+		if result.Pagination.TotalPages != 4 {
+			t.Errorf("Expected total_pages 4 (10 items / 3 per page), got %d", result.Pagination.TotalPages)
+		}
+	})
 }

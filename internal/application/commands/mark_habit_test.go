@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 	"time"
@@ -536,4 +537,20 @@ func TestMarkHabitHandler_CounterFirstMarkWithNegative(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
+}
+
+func (m *mockEntryRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockEntryRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
+}
+
+func (m *mockHabitRepoForMark) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockHabitRepoForMark) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

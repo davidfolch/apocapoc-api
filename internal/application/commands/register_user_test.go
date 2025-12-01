@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"errors"
 	"testing"
@@ -294,4 +295,12 @@ func TestRegisterUserHandler_ClosedRegistration(t *testing.T) {
 	if !errors.Is(err, appErrors.ErrRegistrationClosed) {
 		t.Errorf("expected ErrRegistrationClosed, got %v", err)
 	}
+}
+
+func (m *mockUserRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockUserRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 	"time"
@@ -136,4 +137,12 @@ func TestUnmarkHabitHandler_ReturnsErrorWhenEntryNotFound(t *testing.T) {
 	if err != errors.ErrNotFound {
 		t.Errorf("Expected ErrNotFound for missing entry, got %v", err)
 	}
+}
+
+func (m *mockEntryRepoForUnmark) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockEntryRepoForUnmark) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

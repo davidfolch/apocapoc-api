@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 	"time"
@@ -333,4 +334,20 @@ func TestRequestPasswordResetHandler_ResetLinkFormat(t *testing.T) {
 	if sentEmail.Body == "" {
 		t.Fatal("Email body is empty")
 	}
+}
+
+func (m *mockRequestResetTokenRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockRequestResetTokenRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
+}
+
+func (m *mockRequestResetUserRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockRequestResetUserRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

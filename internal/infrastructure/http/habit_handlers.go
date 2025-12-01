@@ -11,6 +11,7 @@ import (
 	"apocapoc-api/internal/application/queries"
 	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/shared/errors"
+	"apocapoc-api/internal/shared/pagination"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -108,11 +109,13 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 
 // GetUserHabits godoc
 // @Summary Get all user habits
-// @Description Get all active habits for the authenticated user
+// @Description Get all active habits for the authenticated user with optional pagination
 // @Tags habits
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {array} UserHabitResponse
+// @Param page query int false "Page number (default: 1)"
+// @Param page_size query int false "Page size (default: 50, max: 100)"
+// @Success 200 {object} GetUserHabitsResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /habits [get]
@@ -127,15 +130,38 @@ func (h *HabitHandlers) GetUserHabits(w http.ResponseWriter, r *http.Request) {
 		UserID: userID,
 	}
 
-	habits, err := h.getUserHabitsHandler.Handle(r.Context(), query)
+	pageStr := r.URL.Query().Get("page")
+	pageSizeStr := r.URL.Query().Get("page_size")
+
+	if pageStr != "" || pageSizeStr != "" {
+		page := 1
+		pageSize := 50
+
+		if pageStr != "" {
+			if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+				page = p
+			}
+		}
+
+		if pageSizeStr != "" {
+			if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 {
+				pageSize = ps
+			}
+		}
+
+		params := pagination.NewParams(page, pageSize)
+		query.PaginationParams = &params
+	}
+
+	result, err := h.getUserHabitsHandler.Handle(r.Context(), query)
 	if err != nil {
 		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_get_habits")
 		return
 	}
 
-	response := make([]UserHabitResponse, len(habits))
-	for i, habit := range habits {
-		response[i] = UserHabitResponse{
+	habitResponses := make([]UserHabitResponse, len(result.Habits))
+	for i, habit := range result.Habits {
+		habitResponses[i] = UserHabitResponse{
 			ID:           habit.ID,
 			Name:         habit.Name,
 			Type:         habit.Type,
@@ -147,7 +173,15 @@ func (h *HabitHandlers) GetUserHabits(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	respondJSON(w, http.StatusOK, response)
+	if result.Pagination != nil {
+		response := GetUserHabitsResponse{
+			Data:       habitResponses,
+			Pagination: result.Pagination,
+		}
+		respondJSON(w, http.StatusOK, response)
+	} else {
+		respondJSON(w, http.StatusOK, habitResponses)
+	}
 }
 
 // GetHabitByID godoc

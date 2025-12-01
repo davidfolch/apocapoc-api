@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 
@@ -203,4 +204,12 @@ func TestLoginUserHandler_EmailNotVerified(t *testing.T) {
 	if err != errors.ErrEmailNotVerified {
 		t.Errorf("Handle() error = %v, want %v", err, errors.ErrEmailNotVerified)
 	}
+}
+
+func (m *mockLoginUserRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockLoginUserRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

@@ -8,6 +8,7 @@ import (
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/shared/errors"
+	"apocapoc-api/internal/shared/pagination"
 
 	"github.com/google/uuid"
 )
@@ -244,4 +245,40 @@ func (r *HabitRepository) Delete(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+func (r *HabitRepository) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	query := `
+		SELECT id, user_id, name, description, type, frequency,
+			   specific_days, specific_dates, carry_over, is_negative, target_value,
+			   created_at, archived_at
+		FROM habits
+		WHERE user_id = ? AND archived_at IS NULL
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userID, params.Limit(), params.Offset())
+	if err != nil {
+		return nil, fmt.Errorf("failed to find habits: %w", err)
+	}
+	defer rows.Close()
+
+	return r.scanHabits(rows)
+}
+
+func (r *HabitRepository) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM habits
+		WHERE user_id = ? AND archived_at IS NULL
+	`
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count habits: %w", err)
+	}
+
+	return count, nil
 }

@@ -8,6 +8,7 @@ import (
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/value_objects"
 	"apocapoc-api/internal/shared/errors"
+	"apocapoc-api/internal/shared/pagination"
 )
 
 func TestHabitRepositoryCreate(t *testing.T) {
@@ -261,4 +262,163 @@ func TestHabitRepositoryArchive(t *testing.T) {
 	if found.ArchivedAt == nil {
 		t.Error("Expected habit to be archived")
 	}
+}
+
+func TestHabitRepositoryFindActiveByUserIDWithPagination(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	repo := NewHabitRepository(db)
+	ctx := context.Background()
+
+	userID := "user-pagination-test"
+
+	for i := 1; i <= 10; i++ {
+		habit := entities.NewHabit(
+			userID,
+			"Habit "+string(rune(i+'0')),
+			value_objects.HabitTypeBoolean,
+			value_objects.FrequencyDaily,
+			false,
+			false,
+		)
+		err := repo.Create(ctx, habit)
+		if err != nil {
+			t.Fatalf("Create failed: %v", err)
+		}
+		time.Sleep(1 * time.Millisecond)
+	}
+
+	now := time.Now()
+	allHabits, _ := repo.FindActiveByUserID(ctx, userID)
+	allHabits[0].ArchivedAt = &now
+	repo.Update(ctx, allHabits[0])
+
+	t.Run("FirstPage", func(t *testing.T) {
+		params := pagination.NewParams(1, 5)
+		habits, err := repo.FindActiveByUserIDWithPagination(ctx, userID, params)
+		if err != nil {
+			t.Fatalf("FindActiveByUserIDWithPagination failed: %v", err)
+		}
+
+		if len(habits) != 5 {
+			t.Errorf("Expected 5 habits on first page, got %d", len(habits))
+		}
+	})
+
+	t.Run("SecondPage", func(t *testing.T) {
+		params := pagination.NewParams(2, 5)
+		habits, err := repo.FindActiveByUserIDWithPagination(ctx, userID, params)
+		if err != nil {
+			t.Fatalf("FindActiveByUserIDWithPagination failed: %v", err)
+		}
+
+		if len(habits) != 4 {
+			t.Errorf("Expected 4 habits on second page (9 total active), got %d", len(habits))
+		}
+	})
+
+	t.Run("PageBeyondTotal", func(t *testing.T) {
+		params := pagination.NewParams(10, 5)
+		habits, err := repo.FindActiveByUserIDWithPagination(ctx, userID, params)
+		if err != nil {
+			t.Fatalf("FindActiveByUserIDWithPagination failed: %v", err)
+		}
+
+		if len(habits) != 0 {
+			t.Errorf("Expected 0 habits beyond total pages, got %d", len(habits))
+		}
+	})
+
+	t.Run("CustomPageSize", func(t *testing.T) {
+		params := pagination.NewParams(1, 3)
+		habits, err := repo.FindActiveByUserIDWithPagination(ctx, userID, params)
+		if err != nil {
+			t.Fatalf("FindActiveByUserIDWithPagination failed: %v", err)
+		}
+
+		if len(habits) != 3 {
+			t.Errorf("Expected 3 habits with page_size=3, got %d", len(habits))
+		}
+	})
+
+	t.Run("ExcludesArchived", func(t *testing.T) {
+		params := pagination.NewParams(1, 20)
+		habits, err := repo.FindActiveByUserIDWithPagination(ctx, userID, params)
+		if err != nil {
+			t.Fatalf("FindActiveByUserIDWithPagination failed: %v", err)
+		}
+
+		if len(habits) != 9 {
+			t.Errorf("Expected 9 active habits (1 archived), got %d", len(habits))
+		}
+
+		for _, habit := range habits {
+			if habit.ArchivedAt != nil {
+				t.Error("Expected no archived habits in results")
+			}
+		}
+	})
+}
+
+func TestHabitRepositoryCountActiveByUserID(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	repo := NewHabitRepository(db)
+	ctx := context.Background()
+
+	userID := "user-count-test"
+
+	t.Run("NoHabits", func(t *testing.T) {
+		count, err := repo.CountActiveByUserID(ctx, "non-existent-user")
+		if err != nil {
+			t.Fatalf("CountActiveByUserID failed: %v", err)
+		}
+
+		if count != 0 {
+			t.Errorf("Expected count 0 for non-existent user, got %d", count)
+		}
+	})
+
+	for i := 1; i <= 7; i++ {
+		habit := entities.NewHabit(
+			userID,
+			"Habit "+string(rune(i+'0')),
+			value_objects.HabitTypeBoolean,
+			value_objects.FrequencyDaily,
+			false,
+			false,
+		)
+		repo.Create(ctx, habit)
+	}
+
+	t.Run("AllActive", func(t *testing.T) {
+		count, err := repo.CountActiveByUserID(ctx, userID)
+		if err != nil {
+			t.Fatalf("CountActiveByUserID failed: %v", err)
+		}
+
+		if count != 7 {
+			t.Errorf("Expected count 7, got %d", count)
+		}
+	})
+
+	t.Run("WithArchived", func(t *testing.T) {
+		habits, _ := repo.FindActiveByUserID(ctx, userID)
+		now := time.Now()
+		habits[0].ArchivedAt = &now
+		habits[1].ArchivedAt = &now
+		repo.Update(ctx, habits[0])
+		repo.Update(ctx, habits[1])
+
+		count, err := repo.CountActiveByUserID(ctx, userID)
+		if err != nil {
+			t.Fatalf("CountActiveByUserID failed: %v", err)
+		}
+
+		if count != 5 {
+			t.Errorf("Expected count 5 (7 total - 2 archived), got %d", count)
+		}
+	})
 }

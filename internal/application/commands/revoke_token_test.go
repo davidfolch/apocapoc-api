@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 	"time"
@@ -185,4 +186,12 @@ func TestRevokeAllTokensHandler_Handle(t *testing.T) {
 			}
 		})
 	}
+}
+
+func (m *mockRefreshTokenRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockRefreshTokenRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

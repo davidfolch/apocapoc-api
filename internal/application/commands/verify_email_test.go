@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
 	"time"
@@ -335,4 +336,12 @@ func TestVerifyEmailHandler_UpdateError(t *testing.T) {
 	if err == nil {
 		t.Fatal("Handle() expected error but got nil")
 	}
+}
+
+func (m *mockVerifyEmailUserRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockVerifyEmailUserRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }

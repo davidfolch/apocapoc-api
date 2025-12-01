@@ -7,6 +7,7 @@ import (
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/value_objects"
+	"apocapoc-api/internal/shared/pagination"
 )
 
 type mockHabitRepo struct {
@@ -35,6 +36,14 @@ func (m *mockHabitRepo) Update(ctx context.Context, habit *entities.Habit) error
 
 func (m *mockHabitRepo) Delete(ctx context.Context, id string) error {
 	return nil
+}
+
+func (m *mockHabitRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockHabitRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
 }
 
 type mockEntryRepo struct {
