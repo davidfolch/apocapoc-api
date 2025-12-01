@@ -90,10 +90,6 @@ func TestLoginUserHandler_Success(t *testing.T) {
 	if result.Email != "test@example.com" {
 		t.Errorf("Email = %v, want %v", result.Email, "test@example.com")
 	}
-
-	if result.Timezone != "UTC" {
-		t.Errorf("Timezone = %v, want %v", result.Timezone, "UTC")
-	}
 }
 
 func TestLoginUserHandler_EmptyEmail(t *testing.T) {

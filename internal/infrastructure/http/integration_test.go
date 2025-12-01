@@ -120,7 +120,6 @@ func registerAndLogin(t *testing.T, router http.Handler, email, password string)
 	registerBody := RegisterRequest{
 		Email:    email,
 		Password: password,
-		Timezone: "UTC",
 	}
 	makeRequest(t, router, "POST", "/api/v1/auth/register", registerBody, "")
 

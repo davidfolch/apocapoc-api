@@ -118,69 +118,47 @@ func TestValidateRegistration(t *testing.T) {
 		name     string
 		email    string
 		password string
-		timezone string
 		wantErr  bool
 	}{
 		{
 			"valid registration",
 			"user@example.com",
 			"Passw0rd!",
-			"UTC",
 			false,
 		},
 		{
 			"valid with complex email",
 			"user.name+tag@example.co.uk",
 			"MyS3cur3P@ss",
-			"Europe/Madrid",
 			false,
 		},
 		{
 			"invalid email",
 			"invalid-email",
 			"Passw0rd!",
-			"UTC",
 			true,
 		},
 		{
 			"invalid password",
 			"user@example.com",
 			"weak",
-			"UTC",
-			true,
-		},
-		{
-			"invalid timezone",
-			"user@example.com",
-			"Passw0rd!",
-			"InvalidTZ",
 			true,
 		},
 		{
 			"all invalid",
 			"not-an-email",
 			"weak",
-			"bad-tz",
 			true,
 		},
 		{
 			"empty email",
 			"",
 			"Passw0rd!",
-			"UTC",
 			true,
 		},
 		{
 			"empty password",
 			"user@example.com",
-			"",
-			"UTC",
-			true,
-		},
-		{
-			"empty timezone",
-			"user@example.com",
-			"Passw0rd!",
 			"",
 			true,
 		},
@@ -188,7 +166,7 @@ func TestValidateRegistration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateRegistration(tt.email, tt.password, tt.timezone)
+			err := ValidateRegistration(tt.email, tt.password)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateRegistration() error = %v, wantErr %v", err, tt.wantErr)
 			}

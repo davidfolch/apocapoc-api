@@ -43,7 +43,7 @@ func TestUsersTableSchema(t *testing.T) {
 		t.Fatalf("RunMigrations failed: %v", err)
 	}
 
-	columns := []string{"id", "email", "password_hash", "timezone", "created_at", "updated_at"}
+	columns := []string{"id", "email", "password_hash", "email_verified", "email_verification_token", "email_verification_expiry", "created_at", "updated_at"}
 	for _, col := range columns {
 		query := "SELECT " + col + " FROM users LIMIT 0"
 		rows, err := db.Query(query)

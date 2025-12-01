@@ -111,7 +111,6 @@ func TestUserRepositoryFindByID(t *testing.T) {
 	if found.Email != user.Email {
 		t.Errorf("Expected email %s, got %s", user.Email, found.Email)
 	}
-	}
 }
 
 func TestUserRepositoryFindByIDNotFound(t *testing.T) {
@@ -206,7 +205,6 @@ func TestUserRepositoryUpdate(t *testing.T) {
 
 	if found.Email != "updated@example.com" {
 		t.Errorf("Expected email updated@example.com, got %s", found.Email)
-	}
 	}
 }
 
