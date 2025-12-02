@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"apocapoc-api/internal/domain/repositories"
 	"context"
 	"testing"
 
@@ -274,6 +275,145 @@ func TestGetUserHabitsHandler_WithPagination(t *testing.T) {
 
 		if result.Pagination.TotalPages != 4 {
 			t.Errorf("Expected total_pages 4 (10 items / 3 per page), got %d", result.Pagination.TotalPages)
+		}
+	})
+}
+
+func (m *mockGetUserHabitsRepo) FindByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter, paginationParams *pagination.Params) ([]*entities.Habit, error) {
+	var filtered []*entities.Habit
+
+	for _, habit := range m.habits {
+		if filter.Type != nil && habit.Type != *filter.Type {
+			continue
+		}
+		if filter.Frequency != nil && habit.Frequency != *filter.Frequency {
+			continue
+		}
+		if !filter.IncludeArchived && habit.ArchivedAt != nil {
+			continue
+		}
+		filtered = append(filtered, habit)
+	}
+
+	if paginationParams != nil {
+		offset := paginationParams.Offset()
+		limit := paginationParams.Limit()
+
+		if offset >= len(filtered) {
+			return []*entities.Habit{}, nil
+		}
+
+		end := offset + limit
+		if end > len(filtered) {
+			end = len(filtered)
+		}
+
+		return filtered[offset:end], nil
+	}
+
+	return filtered, nil
+}
+
+func (m *mockGetUserHabitsRepo) CountByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter) (int, error) {
+	count := 0
+
+	for _, habit := range m.habits {
+		if filter.Type != nil && habit.Type != *filter.Type {
+			continue
+		}
+		if filter.Frequency != nil && habit.Frequency != *filter.Frequency {
+			continue
+		}
+		if !filter.IncludeArchived && habit.ArchivedAt != nil {
+			continue
+		}
+		count++
+	}
+
+	return count, nil
+}
+
+func TestGetUserHabitsHandler_WithFilters(t *testing.T) {
+	habit1 := entities.NewHabit("user-123", "Exercise", value_objects.HabitTypeBoolean, value_objects.FrequencyDaily, false, false)
+	habit1.ID = "habit-1"
+
+	habit2 := entities.NewHabit("user-123", "Read", value_objects.HabitTypeCounter, value_objects.FrequencyWeekly, false, false)
+	habit2.ID = "habit-2"
+
+	habit3 := entities.NewHabit("user-123", "Water", value_objects.HabitTypeValue, value_objects.FrequencyDaily, false, false)
+	habit3.ID = "habit-3"
+
+	habitRepo := &mockGetUserHabitsRepo{habits: []*entities.Habit{habit1, habit2, habit3}}
+	handler := NewGetUserHabitsHandler(habitRepo)
+
+	t.Run("FilterByType", func(t *testing.T) {
+		habitType := value_objects.HabitTypeBoolean
+		query := GetUserHabitsQuery{
+			UserID: "user-123",
+			FilterParams: &FilterParams{
+				Type: &habitType,
+			},
+		}
+
+		result, err := handler.Handle(context.Background(), query)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(result.Habits) != 1 {
+			t.Errorf("Expected 1 BOOLEAN habit, got %d", len(result.Habits))
+		}
+
+		if result.Habits[0].Type != value_objects.HabitTypeBoolean {
+			t.Errorf("Expected BOOLEAN type, got %s", result.Habits[0].Type)
+		}
+	})
+
+	t.Run("FilterByFrequency", func(t *testing.T) {
+		frequency := value_objects.FrequencyDaily
+		query := GetUserHabitsQuery{
+			UserID: "user-123",
+			FilterParams: &FilterParams{
+				Frequency: &frequency,
+			},
+		}
+
+		result, err := handler.Handle(context.Background(), query)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(result.Habits) != 2 {
+			t.Errorf("Expected 2 DAILY habits, got %d", len(result.Habits))
+		}
+	})
+
+	t.Run("FilterWithPagination", func(t *testing.T) {
+		frequency := value_objects.FrequencyDaily
+		params := pagination.NewParams(1, 1)
+		query := GetUserHabitsQuery{
+			UserID: "user-123",
+			FilterParams: &FilterParams{
+				Frequency: &frequency,
+			},
+			PaginationParams: &params,
+		}
+
+		result, err := handler.Handle(context.Background(), query)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(result.Habits) != 1 {
+			t.Errorf("Expected 1 habit on first page, got %d", len(result.Habits))
+		}
+
+		if result.Pagination == nil {
+			t.Fatal("Expected pagination metadata")
+		}
+
+		if result.Pagination.TotalItems != 2 {
+			t.Errorf("Expected 2 total DAILY habits, got %d", result.Pagination.TotalItems)
 		}
 	})
 }

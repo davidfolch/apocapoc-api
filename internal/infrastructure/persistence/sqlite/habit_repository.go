@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"apocapoc-api/internal/domain/entities"
+	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/shared/errors"
 	"apocapoc-api/internal/shared/pagination"
 
@@ -276,6 +277,96 @@ func (r *HabitRepository) CountActiveByUserID(ctx context.Context, userID string
 
 	var count int
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count habits: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r *HabitRepository) FindByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter, paginationParams *pagination.Params) ([]*entities.Habit, error) {
+	baseQuery := `
+		SELECT id, user_id, name, description, type, frequency,
+			   specific_days, specific_dates, carry_over, is_negative, target_value,
+			   created_at, archived_at
+		FROM habits
+		WHERE user_id = ?`
+
+	args := []interface{}{userID}
+	conditions := []string{}
+
+	if !filter.IncludeArchived {
+		conditions = append(conditions, "archived_at IS NULL")
+	}
+
+	if filter.Type != nil {
+		conditions = append(conditions, "type = ?")
+		args = append(args, string(*filter.Type))
+	}
+
+	if filter.Frequency != nil {
+		conditions = append(conditions, "frequency = ?")
+		args = append(args, string(*filter.Frequency))
+	}
+
+	if filter.Search != "" {
+		conditions = append(conditions, "(name LIKE ? OR description LIKE ?)")
+		searchPattern := "%" + filter.Search + "%"
+		args = append(args, searchPattern, searchPattern)
+	}
+
+	for _, condition := range conditions {
+		baseQuery += " AND " + condition
+	}
+
+	baseQuery += " ORDER BY created_at DESC"
+
+	if paginationParams != nil {
+		baseQuery += " LIMIT ? OFFSET ?"
+		args = append(args, paginationParams.Limit(), paginationParams.Offset())
+	}
+
+	rows, err := r.db.QueryContext(ctx, baseQuery, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find habits: %w", err)
+	}
+	defer rows.Close()
+
+	return r.scanHabits(rows)
+}
+
+func (r *HabitRepository) CountByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter) (int, error) {
+	baseQuery := `SELECT COUNT(*) FROM habits WHERE user_id = ?`
+
+	args := []interface{}{userID}
+	conditions := []string{}
+
+	if !filter.IncludeArchived {
+		conditions = append(conditions, "archived_at IS NULL")
+	}
+
+	if filter.Type != nil {
+		conditions = append(conditions, "type = ?")
+		args = append(args, string(*filter.Type))
+	}
+
+	if filter.Frequency != nil {
+		conditions = append(conditions, "frequency = ?")
+		args = append(args, string(*filter.Frequency))
+	}
+
+	if filter.Search != "" {
+		conditions = append(conditions, "(name LIKE ? OR description LIKE ?)")
+		searchPattern := "%" + filter.Search + "%"
+		args = append(args, searchPattern, searchPattern)
+	}
+
+	for _, condition := range conditions {
+		baseQuery += " AND " + condition
+	}
+
+	var count int
+	err := r.db.QueryRowContext(ctx, baseQuery, args...).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count habits: %w", err)
 	}

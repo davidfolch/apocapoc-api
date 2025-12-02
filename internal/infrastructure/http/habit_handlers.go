@@ -9,6 +9,7 @@ import (
 
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
+	"apocapoc-api/internal/domain/value_objects"
 	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/shared/errors"
 	"apocapoc-api/internal/shared/pagination"
@@ -109,12 +110,16 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 
 // GetUserHabits godoc
 // @Summary Get all user habits
-// @Description Get all active habits for the authenticated user with optional pagination
+// @Description Get all active habits for the authenticated user with optional pagination and filters
 // @Tags habits
 // @Produce json
 // @Security BearerAuth
 // @Param page query int false "Page number (default: 1)"
 // @Param page_size query int false "Page size (default: 50, max: 100)"
+// @Param type query string false "Filter by type (BOOLEAN, COUNTER, VALUE)"
+// @Param frequency query string false "Filter by frequency (DAILY, WEEKLY, MONTHLY)"
+// @Param archived query boolean false "Include archived habits (default: false)"
+// @Param search query string false "Search by name or description"
 // @Success 200 {object} GetUserHabitsResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -151,6 +156,39 @@ func (h *HabitHandlers) GetUserHabits(w http.ResponseWriter, r *http.Request) {
 
 		params := pagination.NewParams(page, pageSize)
 		query.PaginationParams = &params
+	}
+
+	typeStr := r.URL.Query().Get("type")
+	frequencyStr := r.URL.Query().Get("frequency")
+	archivedStr := r.URL.Query().Get("archived")
+	searchStr := r.URL.Query().Get("search")
+
+	if typeStr != "" || frequencyStr != "" || archivedStr != "" || searchStr != "" {
+		filterParams := &queries.FilterParams{}
+
+		if typeStr != "" {
+			habitType := value_objects.HabitType(typeStr)
+			if habitType.IsValid() {
+				filterParams.Type = &habitType
+			}
+		}
+
+		if frequencyStr != "" {
+			frequency := value_objects.Frequency(frequencyStr)
+			if frequency.IsValid() {
+				filterParams.Frequency = &frequency
+			}
+		}
+
+		if archivedStr == "true" {
+			filterParams.IncludeArchived = true
+		}
+
+		if searchStr != "" {
+			filterParams.Search = searchStr
+		}
+
+		query.FilterParams = filterParams
 	}
 
 	result, err := h.getUserHabitsHandler.Handle(r.Context(), query)

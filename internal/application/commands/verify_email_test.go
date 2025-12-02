@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
@@ -343,5 +344,13 @@ func (m *mockVerifyEmailUserRepo) FindActiveByUserIDWithPagination(ctx context.C
 }
 
 func (m *mockVerifyEmailUserRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
+}
+
+func (m *mockVerifyEmailUserRepo) FindByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter, paginationParams *pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockVerifyEmailUserRepo) CountByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter) (int, error) {
 	return 0, nil
 }

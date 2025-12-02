@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"apocapoc-api/internal/domain/repositories"
 	"context"
 	"testing"
 	"time"
@@ -323,4 +324,12 @@ func TestGetTodaysHabitsHandler_CarryOverDisabled(t *testing.T) {
 	if len(results) != 0 {
 		t.Fatalf("Expected 0 habits (no carry-over), got %d", len(results))
 	}
+}
+
+func (m *mockHabitRepo) FindByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter, paginationParams *pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockHabitRepo) CountByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter) (int, error) {
+	return 0, nil
 }
