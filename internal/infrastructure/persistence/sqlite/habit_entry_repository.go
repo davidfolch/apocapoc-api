@@ -185,6 +185,24 @@ func (r *HabitEntryRepository) FindByHabitID(ctx context.Context, habitID string
 	return r.scanEntries(rows)
 }
 
+func (r *HabitEntryRepository) FindByUserID(ctx context.Context, userID string) ([]*entities.HabitEntry, error) {
+	query := `
+		SELECT he.id, he.habit_id, he.scheduled_date, he.completed_at, he.value
+		FROM habit_entries he
+		INNER JOIN habits h ON he.habit_id = h.id
+		WHERE h.user_id = ?
+		ORDER BY he.scheduled_date DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find entries: %w", err)
+	}
+	defer rows.Close()
+
+	return r.scanEntries(rows)
+}
+
 func (r *HabitEntryRepository) FindPendingByHabitID(ctx context.Context, habitID string, beforeDate time.Time) ([]*entities.HabitEntry, error) {
 	query := `
 		SELECT id, habit_id, scheduled_date, completed_at, value

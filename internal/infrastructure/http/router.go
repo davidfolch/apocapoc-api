@@ -16,7 +16,7 @@ import (
 	_ "apocapoc-api/docs"
 )
 
-func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, healthHandlers *HealthHandlers, userHandlers *UserHandlers, jwtService *auth.JWTService, translator *i18n.Translator) *chi.Mux {
+func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, healthHandlers *HealthHandlers, userHandlers *UserHandlers, exportHandlers *ExportHandlers, jwtService *auth.JWTService, translator *i18n.Translator) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -75,6 +75,12 @@ func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHa
 		r.Use(AuthMiddleware(jwtService))
 		r.Use(RateLimitByUser(jwtService, 100, 1*time.Minute))
 		r.Delete("/me", userHandlers.DeleteAccount)
+	})
+
+	r.Route("/api/v1/export", func(r chi.Router) {
+		r.Use(AuthMiddleware(jwtService))
+		r.Use(RateLimitByUser(jwtService, 1, 1*time.Hour))
+		r.Get("/", exportHandlers.ExportData)
 	})
 
 	return r

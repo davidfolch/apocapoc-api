@@ -58,6 +58,7 @@ func setupTestServer(t *testing.T) *TestServer {
 	getHabitByIDHandler := queries.NewGetHabitByIDHandler(habitRepo)
 	getHabitEntriesHandler := queries.NewGetHabitEntriesHandler(habitRepo, entryRepo)
 	getHabitStatsHandler := queries.NewGetHabitStatsHandler(habitRepo, entryRepo)
+	exportUserDataHandler := queries.NewExportUserDataHandler(habitRepo, entryRepo)
 	updateHandler := commands.NewUpdateHabitHandler(habitRepo)
 	archiveHandler := commands.NewArchiveHabitHandler(habitRepo)
 	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
@@ -74,8 +75,9 @@ func setupTestServer(t *testing.T) *TestServer {
 	statsHandlers := NewStatsHandlers(getHabitStatsHandler, translator)
 	healthHandlers := NewHealthHandlers(db, nil)
 	userHandlers := NewUserHandlers(deleteUserHandler, translator)
+	exportHandlers := NewExportHandlers(exportUserDataHandler, translator)
 
-	router := NewRouter("http://localhost:3000", habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService, translator)
+	router := NewRouter("http://localhost:3000", habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, exportHandlers, jwtService, translator)
 
 	handler := http.Handler(router)
 	return &TestServer{

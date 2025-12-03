@@ -47,6 +47,7 @@
     "failed_reset_password": "Failed to reset password",
     "failed_delete_user": "Failed to delete user",
     "failed_get_stats": "Failed to get statistics",
+    "export_failed": "Failed to export data",
     "timezone_required": "Timezone is required",
     "invalid_timezone": "Invalid timezone (must be a valid IANA timezone)"
   },

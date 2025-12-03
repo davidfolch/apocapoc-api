@@ -73,6 +73,10 @@ func (m *mockEntryRepo) FindByHabitIDAndDateRange(ctx context.Context, habitID s
 	return result, nil
 }
 
+func (m *mockEntryRepo) FindByUserID(ctx context.Context, userID string) ([]*entities.HabitEntry, error) {
+	return nil, nil
+}
+
 func (m *mockEntryRepo) FindPendingByHabitID(ctx context.Context, habitID string, beforeDate time.Time) ([]*entities.HabitEntry, error) {
 	return nil, nil
 }
