@@ -65,6 +65,10 @@ func (m *mockEmailService) Send(message services.EmailMessage) error {
 	return nil
 }
 
+func (m *mockEmailService) HealthCheck() error {
+	return nil
+}
+
 func TestVerifyEmailHandler_Success(t *testing.T) {
 	token := "valid-token"
 	expiry := time.Now().Add(24 * time.Hour)

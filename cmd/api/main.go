@@ -116,7 +116,7 @@ func main() {
 	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry, translator)
 	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, translator)
 	statsHandlers := httpInfra.NewStatsHandlers(getHabitStatsHandler, translator)
-	healthHandlers := httpInfra.NewHealthHandlers(db.Conn())
+	healthHandlers := httpInfra.NewHealthHandlers(db.Conn(), emailService)
 	userHandlers := httpInfra.NewUserHandlers(deleteUserHandler, translator)
 
 	router := httpInfra.NewRouter(cfg.AppURL, habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService, translator)

@@ -72,7 +72,7 @@ func setupTestServer(t *testing.T) *TestServer {
 	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry, translator)
 	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, translator)
 	statsHandlers := NewStatsHandlers(getHabitStatsHandler, translator)
-	healthHandlers := NewHealthHandlers(db)
+	healthHandlers := NewHealthHandlers(db, nil)
 	userHandlers := NewUserHandlers(deleteUserHandler, translator)
 
 	router := NewRouter("http://localhost:3000", habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, jwtService, translator)

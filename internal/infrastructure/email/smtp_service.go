@@ -3,6 +3,7 @@ package email
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -53,9 +54,11 @@ func (s *SMTPService) Send(message services.EmailMessage) error {
 	}
 
 	if err := s.sendWithRetry(dialer, m); err != nil {
+		log.Printf("[EMAIL] status=failed to=%s subject=%q error=%q", message.To, message.Subject, err.Error())
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
+	log.Printf("[EMAIL] status=sent to=%s subject=%q", message.To, message.Subject)
 	return nil
 }
 
@@ -102,4 +105,29 @@ func isConfigError(err error) bool {
 
 func (s *SMTPService) GetConfig() SMTPConfig {
 	return s.config
+}
+
+func (s *SMTPService) HealthCheck() error {
+	dialer := mail.NewDialer(s.config.Host, s.config.Port, s.config.Username, s.config.Password)
+	dialer.TLSConfig = &tls.Config{
+		ServerName: s.config.Host,
+	}
+
+	if s.config.Port == 465 {
+		dialer.SSL = true
+	}
+
+	smtpCloser, err := dialer.Dial()
+	if err != nil {
+		if isAuthError(err) {
+			return fmt.Errorf("SMTP authentication failed: %w", err)
+		}
+		if isConfigError(err) {
+			return fmt.Errorf("SMTP connection failed: %w", err)
+		}
+		return fmt.Errorf("SMTP error: %w", err)
+	}
+	defer smtpCloser.Close()
+
+	return nil
 }

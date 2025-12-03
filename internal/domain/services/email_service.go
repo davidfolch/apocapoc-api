@@ -9,4 +9,5 @@ type EmailMessage struct {
 
 type EmailService interface {
 	Send(message EmailMessage) error
+	HealthCheck() error
 }

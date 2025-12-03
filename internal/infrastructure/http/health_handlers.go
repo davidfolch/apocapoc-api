@@ -1,6 +1,7 @@
 package http
 
 import (
+	"apocapoc-api/internal/domain/services"
 	"database/sql"
 	"net/http"
 	"time"
@@ -9,18 +10,21 @@ import (
 var startTime = time.Now()
 
 type HealthHandlers struct {
-	db *sql.DB
+	db           *sql.DB
+	emailService services.EmailService
 }
 
-func NewHealthHandlers(db *sql.DB) *HealthHandlers {
+func NewHealthHandlers(db *sql.DB, emailService services.EmailService) *HealthHandlers {
 	return &HealthHandlers{
-		db: db,
+		db:           db,
+		emailService: emailService,
 	}
 }
 
 type HealthResponse struct {
 	Status   string `json:"status"`
 	Database string `json:"database"`
+	SMTP     string `json:"smtp"`
 	Uptime   string `json:"uptime"`
 }
 
@@ -34,6 +38,7 @@ type HealthResponse struct {
 // @Router /health [get]
 func (h *HealthHandlers) Health(w http.ResponseWriter, r *http.Request) {
 	dbStatus := "ok"
+	smtpStatus := "ok"
 	overallStatus := "ok"
 	statusCode := http.StatusOK
 
@@ -43,12 +48,25 @@ func (h *HealthHandlers) Health(w http.ResponseWriter, r *http.Request) {
 		statusCode = http.StatusServiceUnavailable
 	}
 
+	if h.emailService != nil {
+		if err := h.emailService.HealthCheck(); err != nil {
+			smtpStatus = "error"
+			if overallStatus != "degraded" {
+				overallStatus = "degraded"
+				statusCode = http.StatusServiceUnavailable
+			}
+		}
+	} else {
+		smtpStatus = "disabled"
+	}
+
 	uptime := time.Since(startTime)
 	uptimeStr := formatDuration(uptime)
 
 	response := HealthResponse{
 		Status:   overallStatus,
 		Database: dbStatus,
+		SMTP:     smtpStatus,
 		Uptime:   uptimeStr,
 	}
 
