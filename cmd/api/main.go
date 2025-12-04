@@ -12,6 +12,7 @@ import (
 	"apocapoc-api/internal/application/queries"
 	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/infrastructure/backup"
 	"apocapoc-api/internal/infrastructure/config"
 	"apocapoc-api/internal/infrastructure/crypto"
 	"apocapoc-api/internal/infrastructure/email"
@@ -54,6 +55,27 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer db.Close()
+
+	backupInterval, err := parseDuration(cfg.BackupInterval)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Invalid BACKUP_INTERVAL")
+	}
+
+	backupRetentionDays, err := strconv.Atoi(cfg.BackupRetentionDays)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Invalid BACKUP_RETENTION_DAYS")
+	}
+
+	backupScheduler := backup.NewScheduler(db.Conn(), backup.Config{
+		Enabled:       cfg.BackupEnabled == "true",
+		Interval:      backupInterval,
+		RetentionDays: backupRetentionDays,
+		Path:          cfg.BackupPath,
+		Compress:      cfg.BackupCompress == "true",
+		DatabasePath:  cfg.DBPath,
+	})
+	backupScheduler.Start()
+	defer backupScheduler.Stop()
 
 	jwtExpiryHours, err := parseJWTExpiry(cfg.JWTExpiry)
 	if err != nil {

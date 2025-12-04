@@ -8,46 +8,56 @@ import (
 )
 
 type Config struct {
-	DBPath             string
-	Port               string
-	AppURL             string
-	JWTSecret          string
-	JWTExpiry          string
-	RefreshTokenExpiry string
-	DefaultTimezone    string
-	SMTPHost           string
-	SMTPPort           string
-	SMTPUser           string
-	SMTPPassword       string
-	SMTPFrom           string
-	SupportEmail       string
-	SendWelcomeEmail   string
-	RegistrationMode   string
-	LogLevel           string
-	Environment        string
+	DBPath              string
+	Port                string
+	AppURL              string
+	JWTSecret           string
+	JWTExpiry           string
+	RefreshTokenExpiry  string
+	DefaultTimezone     string
+	SMTPHost            string
+	SMTPPort            string
+	SMTPUser            string
+	SMTPPassword        string
+	SMTPFrom            string
+	SupportEmail        string
+	SendWelcomeEmail    string
+	RegistrationMode    string
+	LogLevel            string
+	Environment         string
+	BackupEnabled       string
+	BackupInterval      string
+	BackupRetentionDays string
+	BackupPath          string
+	BackupCompress      string
 }
 
 func Load() (*Config, error) {
 	godotenv.Load()
 
 	cfg := &Config{
-		DBPath:             os.Getenv("DB_PATH"),
-		Port:               getEnvOrDefault("PORT", "8080"),
-		AppURL:             getEnvOrDefault("APP_URL", "http://localhost:8080"),
-		JWTSecret:          os.Getenv("JWT_SECRET"),
-		JWTExpiry:          os.Getenv("JWT_EXPIRY"),
-		RefreshTokenExpiry: os.Getenv("REFRESH_TOKEN_EXPIRY"),
-		DefaultTimezone:    os.Getenv("DEFAULT_TIMEZONE"),
-		SMTPHost:           os.Getenv("SMTP_HOST"),
-		SMTPPort:           getEnvOrDefault("SMTP_PORT", "587"),
-		SMTPUser:           os.Getenv("SMTP_USER"),
-		SMTPPassword:       os.Getenv("SMTP_PASSWORD"),
-		SMTPFrom:           os.Getenv("SMTP_FROM"),
-		SupportEmail:       getEnvOrDefault("SUPPORT_EMAIL", "contact@apocapoc.app"),
-		SendWelcomeEmail:   getEnvOrDefault("SEND_WELCOME_EMAIL", "false"),
-		RegistrationMode:   getEnvOrDefault("REGISTRATION_MODE", "open"),
-		LogLevel:           getEnvOrDefault("LOG_LEVEL", "info"),
-		Environment:        getEnvOrDefault("ENVIRONMENT", "production"),
+		DBPath:              os.Getenv("DB_PATH"),
+		Port:                getEnvOrDefault("PORT", "8080"),
+		AppURL:              getEnvOrDefault("APP_URL", "http://localhost:8080"),
+		JWTSecret:           os.Getenv("JWT_SECRET"),
+		JWTExpiry:           os.Getenv("JWT_EXPIRY"),
+		RefreshTokenExpiry:  os.Getenv("REFRESH_TOKEN_EXPIRY"),
+		DefaultTimezone:     os.Getenv("DEFAULT_TIMEZONE"),
+		SMTPHost:            os.Getenv("SMTP_HOST"),
+		SMTPPort:            getEnvOrDefault("SMTP_PORT", "587"),
+		SMTPUser:            os.Getenv("SMTP_USER"),
+		SMTPPassword:        os.Getenv("SMTP_PASSWORD"),
+		SMTPFrom:            os.Getenv("SMTP_FROM"),
+		SupportEmail:        getEnvOrDefault("SUPPORT_EMAIL", "contact@apocapoc.app"),
+		SendWelcomeEmail:    getEnvOrDefault("SEND_WELCOME_EMAIL", "false"),
+		RegistrationMode:    getEnvOrDefault("REGISTRATION_MODE", "open"),
+		LogLevel:            getEnvOrDefault("LOG_LEVEL", "info"),
+		Environment:         getEnvOrDefault("ENVIRONMENT", "production"),
+		BackupEnabled:       getEnvOrDefault("BACKUP_ENABLED", "false"),
+		BackupInterval:      getEnvOrDefault("BACKUP_INTERVAL", "24h"),
+		BackupRetentionDays: getEnvOrDefault("BACKUP_RETENTION_DAYS", "7"),
+		BackupPath:          getEnvOrDefault("BACKUP_PATH", "./data/backups"),
+		BackupCompress:      getEnvOrDefault("BACKUP_COMPRESS", "true"),
 	}
 
 	if cfg.DBPath == "" {
