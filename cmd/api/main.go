@@ -16,6 +16,7 @@ import (
 	"apocapoc-api/internal/infrastructure/crypto"
 	"apocapoc-api/internal/infrastructure/email"
 	httpInfra "apocapoc-api/internal/infrastructure/http"
+	"apocapoc-api/internal/infrastructure/logger"
 	"apocapoc-api/internal/infrastructure/persistence/sqlite"
 )
 
@@ -43,20 +44,25 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	logger.Init(logger.Config{
+		Level:       cfg.LogLevel,
+		Environment: cfg.Environment,
+	})
+
 	db, err := sqlite.NewDatabase(cfg.DBPath)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer db.Close()
 
 	jwtExpiryHours, err := parseJWTExpiry(cfg.JWTExpiry)
 	if err != nil {
-		log.Fatalf("Invalid JWT_EXPIRY: %v", err)
+		logger.Fatal().Err(err).Msg("Invalid JWT_EXPIRY")
 	}
 
 	refreshTokenExpiry, err := parseDuration(cfg.RefreshTokenExpiry)
 	if err != nil {
-		log.Fatalf("Invalid REFRESH_TOKEN_EXPIRY: %v", err)
+		logger.Fatal().Err(err).Msg("Invalid REFRESH_TOKEN_EXPIRY")
 	}
 
 	jwtService := auth.NewJWTService(cfg.JWTSecret, jwtExpiryHours)
@@ -66,7 +72,7 @@ func main() {
 	if cfg.SMTPHost != "" {
 		smtpPort, err := strconv.Atoi(cfg.SMTPPort)
 		if err != nil {
-			log.Fatalf("Invalid SMTP_PORT: %v", err)
+			logger.Fatal().Err(err).Msg("Invalid SMTP_PORT")
 		}
 
 		emailService = email.NewSMTPService(email.SMTPConfig{
@@ -89,7 +95,7 @@ func main() {
 
 	translator, err := i18n.NewTranslator()
 	if err != nil {
-		log.Fatalf("Failed to create translator: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to create translator")
 	}
 
 	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, emailService, cfg.AppURL, cfg.RegistrationMode, sendWelcomeEmail)
@@ -124,10 +130,10 @@ func main() {
 	router := httpInfra.NewRouter(cfg.AppURL, habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, exportHandlers, jwtService, translator)
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
-	log.Printf("Server starting on %s", addr)
+	logger.Info().Str("address", addr).Msg("Server starting")
 
 	if err := http.ListenAndServe(addr, router); err != nil {
-		log.Fatalf("Server failed: %v", err)
+		logger.Fatal().Err(err).Msg("Server failed")
 	}
 }
 

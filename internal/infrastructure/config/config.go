@@ -23,6 +23,8 @@ type Config struct {
 	SupportEmail       string
 	SendWelcomeEmail   string
 	RegistrationMode   string
+	LogLevel           string
+	Environment        string
 }
 
 func Load() (*Config, error) {
@@ -44,6 +46,8 @@ func Load() (*Config, error) {
 		SupportEmail:       getEnvOrDefault("SUPPORT_EMAIL", "contact@apocapoc.app"),
 		SendWelcomeEmail:   getEnvOrDefault("SEND_WELCOME_EMAIL", "false"),
 		RegistrationMode:   getEnvOrDefault("REGISTRATION_MODE", "open"),
+		LogLevel:           getEnvOrDefault("LOG_LEVEL", "info"),
+		Environment:        getEnvOrDefault("ENVIRONMENT", "production"),
 	}
 
 	if cfg.DBPath == "" {

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"apocapoc-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/infrastructure/logger"
 )
 
 type contextKey string
@@ -35,6 +36,7 @@ func AuthMiddleware(jwtService *auth.JWTService) func(http.Handler) http.Handler
 			}
 
 			ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+			ctx = logger.AddUserID(ctx, claims.UserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

@@ -6,6 +6,7 @@ import (
 
 	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/infrastructure/auth"
+	"apocapoc-api/internal/infrastructure/logger"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -19,7 +20,7 @@ import (
 func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHandlers, statsHandlers *StatsHandlers, healthHandlers *HealthHandlers, userHandlers *UserHandlers, exportHandlers *ExportHandlers, jwtService *auth.JWTService, translator *i18n.Translator) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(middleware.Logger)
+	r.Use(logger.Middleware)
 	r.Use(middleware.Recoverer)
 	r.Use(i18n.LanguageMiddleware(translator))
 	r.Use(cors.Handler(cors.Options{
