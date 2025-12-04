@@ -46,7 +46,9 @@ func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHa
 		r.Post("/logout", authHandlers.Logout)
 		r.Post("/verify-email", authHandlers.VerifyEmail)
 		r.Post("/resend-verification", authHandlers.ResendVerification)
-		r.Post("/forgot-password", authHandlers.ForgotPassword)
+
+		r.With(RateLimitByEmail(3, 1*time.Hour)).Post("/forgot-password", authHandlers.ForgotPassword)
+
 		r.Post("/reset-password", authHandlers.ResetPassword)
 	})
 
