@@ -9,26 +9,26 @@ import (
 )
 
 type ExportHabitDTO struct {
-	ID            string                   `json:"id"`
-	Name          string                   `json:"name"`
-	Description   string                   `json:"description"`
-	Type          value_objects.HabitType  `json:"type"`
-	Frequency     value_objects.Frequency  `json:"frequency"`
-	SpecificDays  []int                    `json:"specific_days,omitempty"`
-	SpecificDates []int                    `json:"specific_dates,omitempty"`
-	CarryOver     bool                     `json:"carry_over"`
-	IsNegative    bool                     `json:"is_negative"`
-	TargetValue   *float64                 `json:"target_value,omitempty"`
-	CreatedAt     time.Time                `json:"created_at"`
-	ArchivedAt    *time.Time               `json:"archived_at,omitempty"`
+	ID            string                  `json:"id"`
+	Name          string                  `json:"name"`
+	Description   string                  `json:"description"`
+	Type          value_objects.HabitType `json:"type"`
+	Frequency     value_objects.Frequency `json:"frequency"`
+	SpecificDays  []int                   `json:"specific_days,omitempty"`
+	SpecificDates []int                   `json:"specific_dates,omitempty"`
+	CarryOver     bool                    `json:"carry_over"`
+	IsNegative    bool                    `json:"is_negative"`
+	TargetValue   *float64                `json:"target_value,omitempty"`
+	CreatedAt     time.Time               `json:"created_at"`
+	ArchivedAt    *time.Time              `json:"archived_at,omitempty"`
 }
 
 type ExportEntryDTO struct {
-	ID            string     `json:"id"`
-	HabitID       string     `json:"habit_id"`
-	ScheduledDate time.Time  `json:"scheduled_date"`
-	CompletedAt   time.Time  `json:"completed_at"`
-	Value         *float64   `json:"value,omitempty"`
+	ID            string    `json:"id"`
+	HabitID       string    `json:"habit_id"`
+	ScheduledDate time.Time `json:"scheduled_date"`
+	CompletedAt   time.Time `json:"completed_at"`
+	Value         *float64  `json:"value,omitempty"`
 }
 
 type ExportUserDataResult struct {
