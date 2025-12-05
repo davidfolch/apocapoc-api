@@ -131,3 +131,94 @@ func TestAuthFlow(t *testing.T) {
 		}
 	})
 }
+
+func TestRefreshTokenFlow(t *testing.T) {
+	ts := setupTestServer(t)
+	defer ts.Close()
+
+	t.Run("Complete refresh token flow", func(t *testing.T) {
+		registerBody := RegisterRequest{
+			Email:    "refresh@example.com",
+			Password: "Password123!",
+		}
+		makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")
+
+		loginBody := LoginRequest{
+			Email:    "refresh@example.com",
+			Password: "Password123!",
+		}
+		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/login", loginBody, "")
+
+		var loginResp AuthResponse
+		decodeResponse(t, rr, &loginResp)
+
+		if loginResp.RefreshToken == "" {
+			t.Fatal("Expected refresh token in login response")
+		}
+
+		refreshReq := map[string]string{
+			"refresh_token": loginResp.RefreshToken,
+		}
+		rr = makeRequest(t, *ts.Router, "POST", "/api/v1/auth/refresh", refreshReq, "")
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("Expected status 200, got %d. Body: %s", rr.Code, rr.Body.String())
+		}
+
+		var refreshResp AuthResponse
+		decodeResponse(t, rr, &refreshResp)
+
+		if refreshResp.Token == "" {
+			t.Error("Expected new access token in refresh response")
+		}
+		if refreshResp.RefreshToken == "" {
+			t.Error("Expected new refresh token in refresh response")
+		}
+	})
+
+	t.Run("Refresh with invalid token", func(t *testing.T) {
+		refreshReq := map[string]string{
+			"refresh_token": "invalid-token",
+		}
+		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/refresh", refreshReq, "")
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", rr.Code)
+		}
+	})
+
+	t.Run("Logout invalidates refresh token", func(t *testing.T) {
+		registerBody := RegisterRequest{
+			Email:    "logout@example.com",
+			Password: "Password123!",
+		}
+		makeRequest(t, *ts.Router, "POST", "/api/v1/auth/register", registerBody, "")
+
+		loginBody := LoginRequest{
+			Email:    "logout@example.com",
+			Password: "Password123!",
+		}
+		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/auth/login", loginBody, "")
+
+		var loginResp AuthResponse
+		decodeResponse(t, rr, &loginResp)
+
+		logoutReq := map[string]string{
+			"refresh_token": loginResp.RefreshToken,
+		}
+		rr = makeRequest(t, *ts.Router, "POST", "/api/v1/auth/logout", logoutReq, loginResp.Token)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("Expected status 200 for logout, got %d", rr.Code)
+		}
+
+		refreshReq := map[string]string{
+			"refresh_token": loginResp.RefreshToken,
+		}
+		rr = makeRequest(t, *ts.Router, "POST", "/api/v1/auth/refresh", refreshReq, "")
+
+		if rr.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401 when using logged out token, got %d", rr.Code)
+		}
+	})
+}
