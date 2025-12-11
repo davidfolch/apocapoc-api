@@ -105,3 +105,51 @@ type ValidationErrorResponse struct {
 	Error string `json:"error"`
 	Field string `json:"field"`
 }
+
+type SyncHabitDTO struct {
+	ID            string                  `json:"id"`
+	UserID        string                  `json:"user_id"`
+	Name          string                  `json:"name"`
+	Description   string                  `json:"description"`
+	Type          value_objects.HabitType `json:"type"`
+	Frequency     value_objects.Frequency `json:"frequency"`
+	SpecificDays  []int                   `json:"specific_days,omitempty"`
+	SpecificDates []int                   `json:"specific_dates,omitempty"`
+	CarryOver     bool                    `json:"carry_over"`
+	IsNegative    bool                    `json:"is_negative"`
+	TargetValue   *float64                `json:"target_value,omitempty"`
+	CreatedAt     time.Time               `json:"created_at"`
+	UpdatedAt     time.Time               `json:"updated_at"`
+	ArchivedAt    *time.Time              `json:"archived_at,omitempty"`
+}
+
+type SyncHabitEntryDTO struct {
+	ID            string     `json:"id"`
+	HabitID       string     `json:"habit_id"`
+	ScheduledDate time.Time  `json:"scheduled_date"`
+	CompletedAt   time.Time  `json:"completed_at"`
+	Value         *float64   `json:"value,omitempty"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
+type HabitChangesDTO struct {
+	Created []SyncHabitDTO `json:"created"`
+	Updated []SyncHabitDTO `json:"updated"`
+	Deleted []string       `json:"deleted"`
+}
+
+type EntryChangesDTO struct {
+	Created []SyncHabitEntryDTO `json:"created"`
+	Updated []SyncHabitEntryDTO `json:"updated"`
+	Deleted []string            `json:"deleted"`
+}
+
+type SyncChangesResponse struct {
+	Habits  HabitChangesDTO `json:"habits"`
+	Entries EntryChangesDTO `json:"entries"`
+}
+
+type SyncBatchRequest struct {
+	Habits  HabitChangesDTO `json:"habits"`
+	Entries EntryChangesDTO `json:"entries"`
+}

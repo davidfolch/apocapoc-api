@@ -4,6 +4,7 @@ import (
 	"apocapoc-api/internal/domain/repositories"
 	"context"
 	"testing"
+	"time"
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/value_objects"
@@ -331,6 +332,18 @@ func (m *mockGetUserHabitsRepo) CountByUserIDFiltered(ctx context.Context, userI
 	}
 
 	return count, nil
+}
+
+func (m *mockGetUserHabitsRepo) GetChangesSince(ctx context.Context, userID string, since time.Time) (*repositories.HabitChanges, error) {
+	return &repositories.HabitChanges{
+		Created: []*entities.Habit{},
+		Updated: []*entities.Habit{},
+		Deleted: []string{},
+	}, nil
+}
+
+func (m *mockGetUserHabitsRepo) SoftDelete(ctx context.Context, id string) error {
+	return nil
 }
 
 func TestGetUserHabitsHandler_WithFilters(t *testing.T) {

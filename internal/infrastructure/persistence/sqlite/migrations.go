@@ -29,6 +29,10 @@ func RunMigrations(db *sql.DB) error {
 		return err
 	}
 
+	if err := addSyncColumns(db); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -83,6 +87,98 @@ func columnExists(db *sql.DB, table, column string) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func indexExists(db *sql.DB, indexName string) (bool, error) {
+	query := "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = ?"
+	var count int
+	err := db.QueryRow(query, indexName).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func addSyncColumns(db *sql.DB) error {
+	// Columns to add to habits table
+	habitColumns := []struct {
+		name       string
+		definition string
+	}{
+		{"updated_at", "ALTER TABLE habits ADD COLUMN updated_at DATETIME"},
+		{"deleted_at", "ALTER TABLE habits ADD COLUMN deleted_at DATETIME"},
+	}
+
+	for _, col := range habitColumns {
+		exists, err := columnExists(db, "habits", col.name)
+		if err != nil {
+			return fmt.Errorf("failed to check if column %s exists: %w", col.name, err)
+		}
+
+		if !exists {
+			if _, err := db.Exec(col.definition); err != nil {
+				return fmt.Errorf("failed to add column %s: %w", col.name, err)
+			}
+		}
+	}
+
+	// Initialize updated_at with created_at for existing records
+	if _, err := db.Exec("UPDATE habits SET updated_at = created_at WHERE updated_at IS NULL"); err != nil {
+		return fmt.Errorf("failed to initialize updated_at: %w", err)
+	}
+
+	// Columns to add to habit_entries table
+	entryColumns := []struct {
+		name       string
+		definition string
+	}{
+		{"updated_at", "ALTER TABLE habit_entries ADD COLUMN updated_at DATETIME"},
+		{"deleted_at", "ALTER TABLE habit_entries ADD COLUMN deleted_at DATETIME"},
+	}
+
+	for _, col := range entryColumns {
+		exists, err := columnExists(db, "habit_entries", col.name)
+		if err != nil {
+			return fmt.Errorf("failed to check if column %s exists: %w", col.name, err)
+		}
+
+		if !exists {
+			if _, err := db.Exec(col.definition); err != nil {
+				return fmt.Errorf("failed to add column %s: %w", col.name, err)
+			}
+		}
+	}
+
+	// Initialize updated_at with completed_at for existing entries
+	if _, err := db.Exec("UPDATE habit_entries SET updated_at = completed_at WHERE updated_at IS NULL"); err != nil {
+		return fmt.Errorf("failed to initialize updated_at for entries: %w", err)
+	}
+
+	// Create indexes for sync queries
+	indexes := []struct {
+		name       string
+		definition string
+	}{
+		{"idx_habits_updated_at", "CREATE INDEX IF NOT EXISTS idx_habits_updated_at ON habits(user_id, updated_at)"},
+		{"idx_habits_deleted_at", "CREATE INDEX IF NOT EXISTS idx_habits_deleted_at ON habits(deleted_at)"},
+		{"idx_habit_entries_updated_at", "CREATE INDEX IF NOT EXISTS idx_habit_entries_updated_at ON habit_entries(habit_id, updated_at)"},
+		{"idx_habit_entries_deleted_at", "CREATE INDEX IF NOT EXISTS idx_habit_entries_deleted_at ON habit_entries(deleted_at)"},
+	}
+
+	for _, idx := range indexes {
+		exists, err := indexExists(db, idx.name)
+		if err != nil {
+			return fmt.Errorf("failed to check if index %s exists: %w", idx.name, err)
+		}
+
+		if !exists {
+			if _, err := db.Exec(idx.definition); err != nil {
+				return fmt.Errorf("failed to create index %s: %w", idx.name, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 const createUsersTable = `

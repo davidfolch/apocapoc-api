@@ -141,6 +141,8 @@ func main() {
 	archiveHandler := commands.NewArchiveHabitHandler(habitRepo)
 	markHandler := commands.NewMarkHabitHandler(entryRepo, habitRepo)
 	unmarkHandler := commands.NewUnmarkHabitHandler(habitRepo, entryRepo)
+	getSyncChangesHandler := queries.NewGetSyncChangesHandler(habitRepo, entryRepo)
+	applySyncBatchHandler := commands.NewApplySyncBatchHandler(habitRepo, entryRepo)
 
 	authHandlers := httpInfra.NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry, translator)
 	habitHandlers := httpInfra.NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, translator)
@@ -148,8 +150,9 @@ func main() {
 	healthHandlers := httpInfra.NewHealthHandlers(db.Conn(), emailService)
 	userHandlers := httpInfra.NewUserHandlers(deleteUserHandler, translator)
 	exportHandlers := httpInfra.NewExportHandlers(exportUserDataHandler, translator)
+	syncHandlers := httpInfra.NewSyncHandlers(getSyncChangesHandler, applySyncBatchHandler, translator)
 
-	router := httpInfra.NewRouter(cfg.AppURL, habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, exportHandlers, jwtService, translator)
+	router := httpInfra.NewRouter(cfg.AppURL, habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, exportHandlers, syncHandlers, jwtService, translator)
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
 	logger.Info().Str("address", addr).Msg("Server starting")

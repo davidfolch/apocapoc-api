@@ -24,6 +24,67 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/forgot-password": {
+            "post": {
+                "description": "Request a password reset email with a reset token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Request password reset",
+                "parameters": [
+                    {
+                        "description": "User email",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ForgotPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reset email sent successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid email",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Email not verified",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticate user with email and password. Returns both access token and refresh token. The access token is used for API requests, the refresh token is used to obtain new access tokens when they expire.",
@@ -63,6 +124,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Invalid email or password",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Email not verified",
                         "schema": {
                             "$ref": "#/definitions/http.ErrorResponse"
                         }
@@ -185,7 +252,7 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "description": "Create a new user account and receive both access token and refresh token. Store both tokens securely - the refresh token is used to obtain new access tokens when they expire.",
+                "description": "Create a new user account. If email verification is enabled, you will receive a verification email. Otherwise, you can login immediately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -209,19 +276,239 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Returns access token, refresh token, and user ID",
+                        "description": "Returns user ID and message about next steps",
                         "schema": {
-                            "$ref": "#/definitions/http.AuthResponse"
+                            "$ref": "#/definitions/http.RegisterResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid input: email format, password requirements, or timezone",
+                        "description": "Invalid input: email format or password requirements",
+                        "schema": {
+                            "$ref": "#/definitions/http.ValidationErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Registration is closed",
                         "schema": {
                             "$ref": "#/definitions/http.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Email already registered",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/resend-verification": {
+            "post": {
+                "description": "Resend the email verification link to the user's email address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Resend verification email",
+                "parameters": [
+                    {
+                        "description": "User email",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ResendVerificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Verification email sent",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid email",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Email already verified",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/reset-password": {
+            "post": {
+                "description": "Reset user password using the reset token from email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Reset password",
+                "parameters": [
+                    {
+                        "description": "Reset token and new password",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.ResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid token or password requirements not met",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/verify-email": {
+            "post": {
+                "description": "Verify user email address using the token sent via email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Verify email address",
+                "parameters": [
+                    {
+                        "description": "Verification token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.VerifyEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email verified successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or expired token",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Email already verified",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/export": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Export all user habits and entries in JSON format with gzip compression. Limited to 1 export per hour.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "export"
+                ],
+                "summary": "Export user data",
+                "responses": {
+                    "200": {
+                        "description": "Compressed JSON export",
+                        "schema": {
+                            "$ref": "#/definitions/queries.ExportUserDataResult"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded",
                         "schema": {
                             "$ref": "#/definitions/http.ErrorResponse"
                         }
@@ -242,7 +529,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get all active habits for the authenticated user",
+                "description": "Get all active habits for the authenticated user with optional pagination and filters",
                 "produces": [
                     "application/json"
                 ],
@@ -250,14 +537,49 @@ const docTemplate = `{
                     "habits"
                 ],
                 "summary": "Get all user habits",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default: 50, max: 100)",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by type (BOOLEAN, COUNTER, VALUE)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by frequency (DAILY, WEEKLY, MONTHLY)",
+                        "name": "frequency",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include archived habits (default: false)",
+                        "name": "archived",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search by name or description",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/http.UserHabitResponse"
-                            }
+                            "$ref": "#/definitions/http.GetUserHabitsResponse"
                         }
                     },
                     "401": {
@@ -340,7 +662,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get all habits scheduled for today for the authenticated user",
+                "description": "Get all habits scheduled for today for the authenticated user. Includes the entry for today if it exists. Requires timezone as query parameter (e.g., ?timezone=America/New_York).",
                 "produces": [
                     "application/json"
                 ],
@@ -348,6 +670,15 @@ const docTemplate = `{
                     "habits"
                 ],
                 "summary": "Get today's habits",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "IANA timezone (e.g., 'America/New_York', 'Europe/Madrid', 'UTC')",
+                        "name": "timezone",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -356,6 +687,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/http.TodaysHabitResponse"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or missing timezone",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
                         }
                     },
                     "401": {
@@ -885,6 +1222,167 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/sync/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Apply a batch of changes from the client for offline sync (Last-Write-Wins)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "Apply sync batch",
+                "parameters": [
+                    {
+                        "description": "Sync batch data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SyncBatchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sync/changes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all changes (habits and entries) since a given timestamp for offline sync",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sync"
+                ],
+                "summary": "Get sync changes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ISO 8601 timestamp (e.g., 2025-01-01T00:00:00Z)",
+                        "name": "since",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.SyncChangesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Permanently delete the authenticated user's account and all associated data (habits, entries, tokens). This action cannot be undone.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete user account",
+                "responses": {
+                    "200": {
+                        "description": "Account deleted successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing token",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/http.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -940,11 +1438,79 @@ const docTemplate = `{
                 }
             }
         },
+        "http.EntryChangesDTO": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http.SyncHabitEntryDTO"
+                    }
+                },
+                "deleted": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updated": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http.SyncHabitEntryDTO"
+                    }
+                }
+            }
+        },
         "http.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "http.ForgotPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.GetUserHabitsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http.UserHabitResponse"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/pagination.Response"
+                }
+            }
+        },
+        "http.HabitChangesDTO": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http.SyncHabitDTO"
+                    }
+                },
+                "deleted": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updated": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http.SyncHabitDTO"
+                    }
                 }
             }
         },
@@ -992,6 +1558,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "database": {
+                    "type": "string"
+                },
+                "smtp": {
                     "type": "string"
                 },
                 "status": {
@@ -1048,15 +1617,157 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
-                },
-                "timezone": {
+                }
+            }
+        },
+        "http.RegisterResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.ResendVerificationRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.ResetPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.SyncBatchRequest": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "$ref": "#/definitions/http.EntryChangesDTO"
+                },
+                "habits": {
+                    "$ref": "#/definitions/http.HabitChangesDTO"
+                }
+            }
+        },
+        "http.SyncChangesResponse": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "$ref": "#/definitions/http.EntryChangesDTO"
+                },
+                "habits": {
+                    "$ref": "#/definitions/http.HabitChangesDTO"
+                }
+            }
+        },
+        "http.SyncHabitDTO": {
+            "type": "object",
+            "properties": {
+                "archived_at": {
+                    "type": "string"
+                },
+                "carry_over": {
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "frequency": {
+                    "$ref": "#/definitions/value_objects.Frequency"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_negative": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "specific_dates": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "specific_days": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "target_value": {
+                    "type": "number"
+                },
+                "type": {
+                    "$ref": "#/definitions/value_objects.HabitType"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.SyncHabitEntryDTO": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "habit_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "scheduled_date": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "http.TodaysHabitEntryResponse": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
                 }
             }
         },
         "http.TodaysHabitResponse": {
             "type": "object",
             "properties": {
+                "entry": {
+                    "$ref": "#/definitions/http.TodaysHabitEntryResponse"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -1138,6 +1849,129 @@ const docTemplate = `{
                 },
                 "type": {
                     "$ref": "#/definitions/value_objects.HabitType"
+                }
+            }
+        },
+        "http.ValidationErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "field": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.VerifyEmailRequest": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "pagination.Response": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total_items": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "queries.ExportEntryDTO": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "habit_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "scheduled_date": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "queries.ExportHabitDTO": {
+            "type": "object",
+            "properties": {
+                "archived_at": {
+                    "type": "string"
+                },
+                "carry_over": {
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "frequency": {
+                    "$ref": "#/definitions/value_objects.Frequency"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_negative": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "specific_dates": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "specific_days": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "target_value": {
+                    "type": "number"
+                },
+                "type": {
+                    "$ref": "#/definitions/value_objects.HabitType"
+                }
+            }
+        },
+        "queries.ExportUserDataResult": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/queries.ExportEntryDTO"
+                    }
+                },
+                "exported_at": {
+                    "type": "string"
+                },
+                "habits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/queries.ExportHabitDTO"
+                    }
                 }
             }
         },

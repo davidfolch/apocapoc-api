@@ -5,6 +5,7 @@ import (
 	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"testing"
+	"time"
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/shared/errors"
@@ -35,6 +36,34 @@ func (m *mockHabitRepo) Update(ctx context.Context, habit *entities.Habit) error
 }
 
 func (m *mockHabitRepo) Delete(ctx context.Context, id string) error {
+	return nil
+}
+
+func (m *mockHabitRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockHabitRepo) FindByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter, paginationParams *pagination.Params) ([]*entities.Habit, error) {
+	return nil, nil
+}
+
+func (m *mockHabitRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
+	return 0, nil
+}
+
+func (m *mockHabitRepo) CountByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter) (int, error) {
+	return 0, nil
+}
+
+func (m *mockHabitRepo) GetChangesSince(ctx context.Context, userID string, since time.Time) (*repositories.HabitChanges, error) {
+	return &repositories.HabitChanges{
+		Created: []*entities.Habit{},
+		Updated: []*entities.Habit{},
+		Deleted: []string{},
+	}, nil
+}
+
+func (m *mockHabitRepo) SoftDelete(ctx context.Context, id string) error {
 	return nil
 }
 
@@ -230,20 +259,4 @@ func TestCreateHabitHandler_NegativeHabit(t *testing.T) {
 	if habitID == "" {
 		t.Error("Expected habit ID to be returned")
 	}
-}
-
-func (m *mockHabitRepo) FindActiveByUserIDWithPagination(ctx context.Context, userID string, params pagination.Params) ([]*entities.Habit, error) {
-	return nil, nil
-}
-
-func (m *mockHabitRepo) CountActiveByUserID(ctx context.Context, userID string) (int, error) {
-	return 0, nil
-}
-
-func (m *mockHabitRepo) FindByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter, paginationParams *pagination.Params) ([]*entities.Habit, error) {
-	return nil, nil
-}
-
-func (m *mockHabitRepo) CountByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter) (int, error) {
-	return 0, nil
 }

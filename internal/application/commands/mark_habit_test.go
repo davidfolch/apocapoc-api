@@ -59,6 +59,18 @@ func (m *mockEntryRepo) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (m *mockEntryRepo) GetChangesSince(ctx context.Context, userID string, since time.Time) (*repositories.HabitEntryChanges, error) {
+	return &repositories.HabitEntryChanges{
+		Created: []*entities.HabitEntry{},
+		Updated: []*entities.HabitEntry{},
+		Deleted: []string{},
+	}, nil
+}
+
+func (m *mockEntryRepo) SoftDelete(ctx context.Context, id string) error {
+	return nil
+}
+
 type mockHabitRepoForMark struct {
 	habit *entities.Habit
 }
@@ -574,4 +586,16 @@ func (m *mockHabitRepoForMark) FindByUserIDFiltered(ctx context.Context, userID 
 
 func (m *mockHabitRepoForMark) CountByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter) (int, error) {
 	return 0, nil
+}
+
+func (m *mockHabitRepoForMark) GetChangesSince(ctx context.Context, userID string, since time.Time) (*repositories.HabitChanges, error) {
+	return &repositories.HabitChanges{
+		Created: []*entities.Habit{},
+		Updated: []*entities.Habit{},
+		Deleted: []string{},
+	}, nil
+}
+
+func (m *mockHabitRepoForMark) SoftDelete(ctx context.Context, id string) error {
+	return nil
 }

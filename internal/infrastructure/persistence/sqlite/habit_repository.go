@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/repositories"
@@ -31,8 +32,8 @@ func (r *HabitRepository) Create(ctx context.Context, habit *entities.Habit) err
 	query := `
 		INSERT INTO habits (
 			id, user_id, name, description, type, frequency,
-			specific_days, specific_dates, carry_over, is_negative, target_value, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			specific_days, specific_dates, carry_over, is_negative, target_value, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	_, err := r.db.ExecContext(ctx, query,
@@ -48,6 +49,7 @@ func (r *HabitRepository) Create(ctx context.Context, habit *entities.Habit) err
 		habit.IsNegative,
 		habit.TargetValue,
 		habit.CreatedAt,
+		habit.UpdatedAt,
 	)
 
 	if err != nil {
@@ -61,16 +63,18 @@ func (r *HabitRepository) FindByID(ctx context.Context, id string) (*entities.Ha
 	query := `
 		SELECT id, user_id, name, description, type, frequency,
 			   specific_days, specific_dates, carry_over, is_negative, target_value,
-			   created_at, archived_at
+			   created_at, updated_at, archived_at, deleted_at
 		FROM habits
-		WHERE id = ?
+		WHERE id = ? AND deleted_at IS NULL
 	`
 
 	var (
 		habit         entities.Habit
 		specificDays  sql.NullString
 		specificDates sql.NullString
+		updatedAt     sql.NullTime
 		archivedAt    sql.NullTime
+		deletedAt     sql.NullTime
 	)
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
@@ -86,7 +90,9 @@ func (r *HabitRepository) FindByID(ctx context.Context, id string) (*entities.Ha
 		&habit.IsNegative,
 		&habit.TargetValue,
 		&habit.CreatedAt,
+		&updatedAt,
 		&archivedAt,
+		&deletedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -96,14 +102,21 @@ func (r *HabitRepository) FindByID(ctx context.Context, id string) (*entities.Ha
 		return nil, fmt.Errorf("failed to find habit: %w", err)
 	}
 
+	if updatedAt.Valid {
+		habit.UpdatedAt = updatedAt.Time
+	}
+	if archivedAt.Valid {
+		habit.ArchivedAt = &archivedAt.Time
+	}
+	if deletedAt.Valid {
+		habit.DeletedAt = &deletedAt.Time
+	}
+
 	if specificDays.Valid {
 		json.Unmarshal([]byte(specificDays.String), &habit.SpecificDays)
 	}
 	if specificDates.Valid {
 		json.Unmarshal([]byte(specificDates.String), &habit.SpecificDates)
-	}
-	if archivedAt.Valid {
-		habit.ArchivedAt = &archivedAt.Time
 	}
 
 	return &habit, nil
@@ -113,9 +126,9 @@ func (r *HabitRepository) FindActiveByUserID(ctx context.Context, userID string)
 	query := `
 		SELECT id, user_id, name, description, type, frequency,
 			   specific_days, specific_dates, carry_over, is_negative, target_value,
-			   created_at, archived_at
+			   created_at, updated_at, archived_at, deleted_at
 		FROM habits
-		WHERE user_id = ? AND archived_at IS NULL
+		WHERE user_id = ? AND archived_at IS NULL AND deleted_at IS NULL
 		ORDER BY created_at DESC
 	`
 
@@ -129,6 +142,8 @@ func (r *HabitRepository) FindActiveByUserID(ctx context.Context, userID string)
 }
 
 func (r *HabitRepository) Update(ctx context.Context, habit *entities.Habit) error {
+	habit.Touch()
+
 	specificDays, _ := json.Marshal(habit.SpecificDays)
 	specificDates, _ := json.Marshal(habit.SpecificDates)
 
@@ -136,8 +151,8 @@ func (r *HabitRepository) Update(ctx context.Context, habit *entities.Habit) err
 		UPDATE habits
 		SET name = ?, description = ?, type = ?, frequency = ?,
 			specific_days = ?, specific_dates = ?, carry_over = ?, is_negative = ?,
-			target_value = ?, archived_at = ?
-		WHERE id = ?
+			target_value = ?, archived_at = ?, updated_at = ?
+		WHERE id = ? AND deleted_at IS NULL
 	`
 
 	result, err := r.db.ExecContext(ctx, query,
@@ -151,6 +166,7 @@ func (r *HabitRepository) Update(ctx context.Context, habit *entities.Habit) err
 		habit.IsNegative,
 		habit.TargetValue,
 		habit.ArchivedAt,
+		habit.UpdatedAt,
 		habit.ID,
 	)
 
@@ -174,7 +190,9 @@ func (r *HabitRepository) scanHabits(rows *sql.Rows) ([]*entities.Habit, error) 
 			habit         entities.Habit
 			specificDays  sql.NullString
 			specificDates sql.NullString
+			updatedAt     sql.NullTime
 			archivedAt    sql.NullTime
+			deletedAt     sql.NullTime
 		)
 
 		err := rows.Scan(
@@ -190,7 +208,9 @@ func (r *HabitRepository) scanHabits(rows *sql.Rows) ([]*entities.Habit, error) 
 			&habit.IsNegative,
 			&habit.TargetValue,
 			&habit.CreatedAt,
+			&updatedAt,
 			&archivedAt,
+			&deletedAt,
 		)
 
 		if err != nil {
@@ -203,8 +223,14 @@ func (r *HabitRepository) scanHabits(rows *sql.Rows) ([]*entities.Habit, error) 
 		if specificDates.Valid {
 			json.Unmarshal([]byte(specificDates.String), &habit.SpecificDates)
 		}
+		if updatedAt.Valid {
+			habit.UpdatedAt = updatedAt.Time
+		}
 		if archivedAt.Valid {
 			habit.ArchivedAt = &archivedAt.Time
+		}
+		if deletedAt.Valid {
+			habit.DeletedAt = &deletedAt.Time
 		}
 
 		habits = append(habits, &habit)
@@ -217,9 +243,9 @@ func (r *HabitRepository) FindByUserID(ctx context.Context, userID string) ([]*e
 	query := `
 		SELECT id, user_id, name, description, type, frequency,
 			   specific_days, specific_dates, carry_over, is_negative, target_value,
-			   created_at, archived_at
+			   created_at, updated_at, archived_at, deleted_at
 		FROM habits
-		WHERE user_id = ?
+		WHERE user_id = ? AND deleted_at IS NULL
 		ORDER BY created_at DESC
 	`
 
@@ -252,9 +278,9 @@ func (r *HabitRepository) FindActiveByUserIDWithPagination(ctx context.Context, 
 	query := `
 		SELECT id, user_id, name, description, type, frequency,
 			   specific_days, specific_dates, carry_over, is_negative, target_value,
-			   created_at, archived_at
+			   created_at, updated_at, archived_at, deleted_at
 		FROM habits
-		WHERE user_id = ? AND archived_at IS NULL
+		WHERE user_id = ? AND archived_at IS NULL AND deleted_at IS NULL
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?
 	`
@@ -272,7 +298,7 @@ func (r *HabitRepository) CountActiveByUserID(ctx context.Context, userID string
 	query := `
 		SELECT COUNT(*)
 		FROM habits
-		WHERE user_id = ? AND archived_at IS NULL
+		WHERE user_id = ? AND archived_at IS NULL AND deleted_at IS NULL
 	`
 
 	var count int
@@ -288,12 +314,15 @@ func (r *HabitRepository) FindByUserIDFiltered(ctx context.Context, userID strin
 	baseQuery := `
 		SELECT id, user_id, name, description, type, frequency,
 			   specific_days, specific_dates, carry_over, is_negative, target_value,
-			   created_at, archived_at
+			   created_at, updated_at, archived_at, deleted_at
 		FROM habits
 		WHERE user_id = ?`
 
 	args := []interface{}{userID}
 	conditions := []string{}
+
+	// Always exclude soft deleted
+	conditions = append(conditions, "deleted_at IS NULL")
 
 	if !filter.IncludeArchived {
 		conditions = append(conditions, "archived_at IS NULL")
@@ -341,6 +370,9 @@ func (r *HabitRepository) CountByUserIDFiltered(ctx context.Context, userID stri
 	args := []interface{}{userID}
 	conditions := []string{}
 
+	// Always exclude soft deleted
+	conditions = append(conditions, "deleted_at IS NULL")
+
 	if !filter.IncludeArchived {
 		conditions = append(conditions, "archived_at IS NULL")
 	}
@@ -372,4 +404,142 @@ func (r *HabitRepository) CountByUserIDFiltered(ctx context.Context, userID stri
 	}
 
 	return count, nil
+}
+
+func (r *HabitRepository) GetChangesSince(ctx context.Context, userID string, since time.Time) (*repositories.HabitChanges, error) {
+	changes := &repositories.HabitChanges{
+		Created: []*entities.Habit{},
+		Updated: []*entities.Habit{},
+		Deleted: []string{},
+	}
+
+	// Get created and updated habits (not deleted)
+	query := `
+		SELECT id, user_id, name, description, type, frequency,
+			   specific_days, specific_dates, carry_over, is_negative, target_value,
+			   created_at, updated_at, archived_at, deleted_at
+		FROM habits
+		WHERE user_id = ?
+		  AND updated_at > ?
+		  AND deleted_at IS NULL
+		ORDER BY updated_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userID, since)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query habits changes: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			habit         entities.Habit
+			specificDays  sql.NullString
+			specificDates sql.NullString
+			updatedAt     sql.NullTime
+			archivedAt    sql.NullTime
+			deletedAt     sql.NullTime
+		)
+
+		err := rows.Scan(
+			&habit.ID,
+			&habit.UserID,
+			&habit.Name,
+			&habit.Description,
+			&habit.Type,
+			&habit.Frequency,
+			&specificDays,
+			&specificDates,
+			&habit.CarryOver,
+			&habit.IsNegative,
+			&habit.TargetValue,
+			&habit.CreatedAt,
+			&updatedAt,
+			&archivedAt,
+			&deletedAt,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan habit: %w", err)
+		}
+
+		if specificDays.Valid {
+			json.Unmarshal([]byte(specificDays.String), &habit.SpecificDays)
+		}
+		if specificDates.Valid {
+			json.Unmarshal([]byte(specificDates.String), &habit.SpecificDates)
+		}
+		if updatedAt.Valid {
+			habit.UpdatedAt = updatedAt.Time
+		}
+		if archivedAt.Valid {
+			habit.ArchivedAt = &archivedAt.Time
+		}
+		if deletedAt.Valid {
+			habit.DeletedAt = &deletedAt.Time
+		}
+
+		// Classify as created or updated based on when it was created
+		if habit.CreatedAt.After(since) {
+			changes.Created = append(changes.Created, &habit)
+		} else {
+			changes.Updated = append(changes.Updated, &habit)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating habits: %w", err)
+	}
+
+	// Get deleted habits
+	queryDeleted := `
+		SELECT id
+		FROM habits
+		WHERE user_id = ?
+		  AND deleted_at IS NOT NULL
+		  AND deleted_at > ?
+		ORDER BY deleted_at ASC
+	`
+
+	rowsDeleted, err := r.db.QueryContext(ctx, queryDeleted, userID, since)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query deleted habits: %w", err)
+	}
+	defer rowsDeleted.Close()
+
+	for rowsDeleted.Next() {
+		var id string
+		if err := rowsDeleted.Scan(&id); err != nil {
+			return nil, fmt.Errorf("failed to scan deleted habit id: %w", err)
+		}
+		changes.Deleted = append(changes.Deleted, id)
+	}
+
+	if err := rowsDeleted.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating deleted habits: %w", err)
+	}
+
+	return changes, nil
+}
+
+func (r *HabitRepository) SoftDelete(ctx context.Context, id string) error {
+	now := time.Now()
+
+	query := `
+		UPDATE habits
+		SET deleted_at = ?, updated_at = ?
+		WHERE id = ? AND deleted_at IS NULL
+	`
+
+	result, err := r.db.ExecContext(ctx, query, now, now, id)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete habit: %w", err)
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return errors.ErrNotFound
+	}
+
+	return nil
 }

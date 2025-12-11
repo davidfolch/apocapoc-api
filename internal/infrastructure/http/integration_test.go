@@ -70,14 +70,18 @@ func setupTestServer(t *testing.T) *TestServer {
 
 	translator, _ := i18n.NewTranslator()
 
+	getSyncChangesHandler := queries.NewGetSyncChangesHandler(habitRepo, entryRepo)
+	applySyncBatchHandler := commands.NewApplySyncBatchHandler(habitRepo, entryRepo)
+
 	authHandlers := NewAuthHandlers(registerHandler, loginHandler, refreshTokenHandler, revokeTokenHandler, revokeAllTokensHandler, verifyEmailHandler, resendVerificationEmailHandler, requestPasswordResetHandler, resetPasswordHandler, jwtService, refreshTokenRepo, refreshTokenExpiry, translator)
 	habitHandlers := NewHabitHandlers(createHandler, getTodaysHandler, getUserHabitsHandler, getHabitByIDHandler, getHabitEntriesHandler, updateHandler, archiveHandler, markHandler, unmarkHandler, translator)
 	statsHandlers := NewStatsHandlers(getHabitStatsHandler, translator)
 	healthHandlers := NewHealthHandlers(db, nil)
 	userHandlers := NewUserHandlers(deleteUserHandler, translator)
 	exportHandlers := NewExportHandlers(exportUserDataHandler, translator)
+	syncHandlers := NewSyncHandlers(getSyncChangesHandler, applySyncBatchHandler, translator)
 
-	router := NewRouter("http://localhost:3000", habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, exportHandlers, jwtService, translator)
+	router := NewRouter("http://localhost:3000", habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, exportHandlers, syncHandlers, jwtService, translator)
 
 	handler := http.Handler(router)
 	return &TestServer{

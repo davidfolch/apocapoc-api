@@ -155,3 +155,15 @@ func (m *mockEntryRepoForUnmark) FindByUserIDFiltered(ctx context.Context, userI
 func (m *mockEntryRepoForUnmark) CountByUserIDFiltered(ctx context.Context, userID string, filter repositories.HabitFilter) (int, error) {
 	return 0, nil
 }
+
+func (m *mockEntryRepoForUnmark) GetChangesSince(ctx context.Context, userID string, since time.Time) (*repositories.HabitEntryChanges, error) {
+	return &repositories.HabitEntryChanges{
+		Created: []*entities.HabitEntry{},
+		Updated: []*entities.HabitEntry{},
+		Deleted: []string{},
+	}, nil
+}
+
+func (m *mockEntryRepoForUnmark) SoftDelete(ctx context.Context, id string) error {
+	return nil
+}

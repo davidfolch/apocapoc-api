@@ -34,10 +34,54 @@ definitions:
       type:
         $ref: '#/definitions/value_objects.HabitType'
     type: object
+  http.EntryChangesDTO:
+    properties:
+      created:
+        items:
+          $ref: '#/definitions/http.SyncHabitEntryDTO'
+        type: array
+      deleted:
+        items:
+          type: string
+        type: array
+      updated:
+        items:
+          $ref: '#/definitions/http.SyncHabitEntryDTO'
+        type: array
+    type: object
   http.ErrorResponse:
     properties:
       error:
         type: string
+    type: object
+  http.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  http.GetUserHabitsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/http.UserHabitResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/pagination.Response'
+    type: object
+  http.HabitChangesDTO:
+    properties:
+      created:
+        items:
+          $ref: '#/definitions/http.SyncHabitDTO'
+        type: array
+      deleted:
+        items:
+          type: string
+        type: array
+      updated:
+        items:
+          $ref: '#/definitions/http.SyncHabitDTO'
+        type: array
     type: object
   http.HabitEntriesResponse:
     properties:
@@ -68,6 +112,8 @@ definitions:
   http.HealthResponse:
     properties:
       database:
+        type: string
+      smtp:
         type: string
       status:
         type: string
@@ -104,11 +150,103 @@ definitions:
         type: string
       password:
         type: string
-      timezone:
+    type: object
+  http.RegisterResponse:
+    properties:
+      message:
         type: string
+      user_id:
+        type: string
+    type: object
+  http.ResendVerificationRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  http.ResetPasswordRequest:
+    properties:
+      new_password:
+        type: string
+      token:
+        type: string
+    type: object
+  http.SyncBatchRequest:
+    properties:
+      entries:
+        $ref: '#/definitions/http.EntryChangesDTO'
+      habits:
+        $ref: '#/definitions/http.HabitChangesDTO'
+    type: object
+  http.SyncChangesResponse:
+    properties:
+      entries:
+        $ref: '#/definitions/http.EntryChangesDTO'
+      habits:
+        $ref: '#/definitions/http.HabitChangesDTO'
+    type: object
+  http.SyncHabitDTO:
+    properties:
+      archived_at:
+        type: string
+      carry_over:
+        type: boolean
+      created_at:
+        type: string
+      description:
+        type: string
+      frequency:
+        $ref: '#/definitions/value_objects.Frequency'
+      id:
+        type: string
+      is_negative:
+        type: boolean
+      name:
+        type: string
+      specific_dates:
+        items:
+          type: integer
+        type: array
+      specific_days:
+        items:
+          type: integer
+        type: array
+      target_value:
+        type: number
+      type:
+        $ref: '#/definitions/value_objects.HabitType'
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  http.SyncHabitEntryDTO:
+    properties:
+      completed_at:
+        type: string
+      habit_id:
+        type: string
+      id:
+        type: string
+      scheduled_date:
+        type: string
+      updated_at:
+        type: string
+      value:
+        type: number
+    type: object
+  http.TodaysHabitEntryResponse:
+    properties:
+      completed_at:
+        type: string
+      id:
+        type: string
+      value:
+        type: number
     type: object
   http.TodaysHabitResponse:
     properties:
+      entry:
+        $ref: '#/definitions/http.TodaysHabitEntryResponse'
       id:
         type: string
       is_carried_over:
@@ -164,6 +302,86 @@ definitions:
       type:
         $ref: '#/definitions/value_objects.HabitType'
     type: object
+  http.ValidationErrorResponse:
+    properties:
+      error:
+        type: string
+      field:
+        type: string
+    type: object
+  http.VerifyEmailRequest:
+    properties:
+      token:
+        type: string
+    type: object
+  pagination.Response:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_items:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  queries.ExportEntryDTO:
+    properties:
+      completed_at:
+        type: string
+      habit_id:
+        type: string
+      id:
+        type: string
+      scheduled_date:
+        type: string
+      value:
+        type: number
+    type: object
+  queries.ExportHabitDTO:
+    properties:
+      archived_at:
+        type: string
+      carry_over:
+        type: boolean
+      created_at:
+        type: string
+      description:
+        type: string
+      frequency:
+        $ref: '#/definitions/value_objects.Frequency'
+      id:
+        type: string
+      is_negative:
+        type: boolean
+      name:
+        type: string
+      specific_dates:
+        items:
+          type: integer
+        type: array
+      specific_days:
+        items:
+          type: integer
+        type: array
+      target_value:
+        type: number
+      type:
+        $ref: '#/definitions/value_objects.HabitType'
+    type: object
+  queries.ExportUserDataResult:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/queries.ExportEntryDTO'
+        type: array
+      exported_at:
+        type: string
+      habits:
+        items:
+          $ref: '#/definitions/queries.ExportHabitDTO'
+        type: array
+    type: object
   queries.HabitStatsDTO:
     properties:
       completion_rate:
@@ -215,6 +433,46 @@ info:
   termsOfService: http://swagger.io/terms/
   title: Apocapoc API
 paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Request a password reset email with a reset token
+      parameters:
+      - description: User email
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reset email sent successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid email
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "403":
+          description: Email not verified
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Request password reset
+      tags:
+      - auth
   /auth/login:
     post:
       consumes:
@@ -242,6 +500,10 @@ paths:
             $ref: '#/definitions/http.ErrorResponse'
         "401":
           description: Invalid email or password
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "403":
+          description: Email not verified
           schema:
             $ref: '#/definitions/http.ErrorResponse'
         "500":
@@ -333,9 +595,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new user account and receive both access token and refresh
-        token. Store both tokens securely - the refresh token is used to obtain new
-        access tokens when they expire.
+      description: Create a new user account. If email verification is enabled, you
+        will receive a verification email. Otherwise, you can login immediately.
       parameters:
       - description: 'Registration data (password requires: min 8 chars, uppercase,
           lowercase, digit, special char)'
@@ -348,11 +609,15 @@ paths:
       - application/json
       responses:
         "201":
-          description: Returns access token, refresh token, and user ID
+          description: Returns user ID and message about next steps
           schema:
-            $ref: '#/definitions/http.AuthResponse'
+            $ref: '#/definitions/http.RegisterResponse'
         "400":
-          description: 'Invalid input: email format, password requirements, or timezone'
+          description: 'Invalid input: email format or password requirements'
+          schema:
+            $ref: '#/definitions/http.ValidationErrorResponse'
+        "403":
+          description: Registration is closed
           schema:
             $ref: '#/definitions/http.ErrorResponse'
         "409":
@@ -366,18 +631,182 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /auth/resend-verification:
+    post:
+      consumes:
+      - application/json
+      description: Resend the email verification link to the user's email address
+      parameters:
+      - description: User email
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ResendVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Verification email sent
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid email
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "409":
+          description: Email already verified
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Resend verification email
+      tags:
+      - auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset user password using the reset token from email
+      parameters:
+      - description: Reset token and new password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid token or password requirements not met
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Reset password
+      tags:
+      - auth
+  /auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Verify user email address using the token sent via email
+      parameters:
+      - description: Verification token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid or expired token
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "409":
+          description: Email already verified
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Verify email address
+      tags:
+      - auth
+  /export:
+    get:
+      description: Export all user habits and entries in JSON format with gzip compression.
+        Limited to 1 export per hour.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Compressed JSON export
+          schema:
+            $ref: '#/definitions/queries.ExportUserDataResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "429":
+          description: Rate limit exceeded
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Export user data
+      tags:
+      - export
   /habits:
     get:
-      description: Get all active habits for the authenticated user
+      description: Get all active habits for the authenticated user with optional
+        pagination and filters
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Page size (default: 50, max: 100)'
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by type (BOOLEAN, COUNTER, VALUE)
+        in: query
+        name: type
+        type: string
+      - description: Filter by frequency (DAILY, WEEKLY, MONTHLY)
+        in: query
+        name: frequency
+        type: string
+      - description: 'Include archived habits (default: false)'
+        in: query
+        name: archived
+        type: boolean
+      - description: Search by name or description
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/http.UserHabitResponse'
-            type: array
+            $ref: '#/definitions/http.GetUserHabitsResponse'
         "401":
           description: Unauthorized
           schema:
@@ -708,7 +1137,15 @@ paths:
       - habits
   /habits/today:
     get:
-      description: Get all habits scheduled for today for the authenticated user
+      description: Get all habits scheduled for today for the authenticated user.
+        Includes the entry for today if it exists. Requires timezone as query parameter
+        (e.g., ?timezone=America/New_York).
+      parameters:
+      - description: IANA timezone (e.g., 'America/New_York', 'Europe/Madrid', 'UTC')
+        in: query
+        name: timezone
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -718,6 +1155,10 @@ paths:
             items:
               $ref: '#/definitions/http.TodaysHabitResponse'
             type: array
+        "400":
+          description: Invalid or missing timezone
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -786,6 +1227,110 @@ paths:
       summary: Get habit statistics
       tags:
       - stats
+  /sync/batch:
+    post:
+      consumes:
+      - application/json
+      description: Apply a batch of changes from the client for offline sync (Last-Write-Wins)
+      parameters:
+      - description: Sync batch data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/http.SyncBatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Apply sync batch
+      tags:
+      - sync
+  /sync/changes:
+    get:
+      consumes:
+      - application/json
+      description: Get all changes (habits and entries) since a given timestamp for
+        offline sync
+      parameters:
+      - description: ISO 8601 timestamp (e.g., 2025-01-01T00:00:00Z)
+        in: query
+        name: since
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.SyncChangesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get sync changes
+      tags:
+      - sync
+  /users/me:
+    delete:
+      description: Permanently delete the authenticated user's account and all associated
+        data (habits, entries, tokens). This action cannot be undone.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Account deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized - invalid or missing token
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user account
+      tags:
+      - users
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.
