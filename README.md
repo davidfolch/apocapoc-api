@@ -20,7 +20,7 @@ REST API for habit tracking built with Go. Self-hosted alternative for developer
 
 - Multiple habit types: Boolean, Counter, Value
 - Flexible scheduling: Daily, Weekly, Monthly
-- Statistics: Streaks, completion rates, progress tracking
+- Statistics: Streaks and completions tracking
 - JWT authentication, rate limiting, optional email verification
 - Registration modes: Open or closed
 - SQLite database (single file)

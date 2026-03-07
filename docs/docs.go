@@ -1172,7 +1172,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get statistics for a specific habit including streaks and completion rates",
+                "description": "Get statistics for a specific habit including streaks and completions",
                 "produces": [
                     "application/json"
                 ],
@@ -1799,6 +1799,9 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "frequency": {
+                    "$ref": "#/definitions/value_objects.Frequency"
                 },
                 "name": {
                     "type": "string"

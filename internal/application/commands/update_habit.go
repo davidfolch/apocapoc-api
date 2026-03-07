@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/domain/value_objects"
 	"apocapoc-api/internal/shared/errors"
 )
 
@@ -13,10 +14,11 @@ type UpdateHabitCommand struct {
 	UserID        string
 	Name          string
 	Description   string
-	CarryOver     bool
-	TargetValue   *float64
+	Frequency     value_objects.Frequency
 	SpecificDays  []int
 	SpecificDates []int
+	CarryOver     bool
+	TargetValue   *float64
 }
 
 type UpdateHabitHandler struct {
@@ -31,6 +33,18 @@ func NewUpdateHabitHandler(habitRepo repositories.HabitRepository) *UpdateHabitH
 
 func (h *UpdateHabitHandler) Handle(ctx context.Context, cmd UpdateHabitCommand) error {
 	if strings.TrimSpace(cmd.Name) == "" {
+		return errors.ErrInvalidInput
+	}
+
+	if !cmd.Frequency.IsValid() {
+		return errors.ErrInvalidInput
+	}
+
+	if cmd.Frequency == value_objects.FrequencyWeekly && len(cmd.SpecificDays) == 0 {
+		return errors.ErrInvalidInput
+	}
+
+	if cmd.Frequency == value_objects.FrequencyMonthly && len(cmd.SpecificDates) == 0 {
 		return errors.ErrInvalidInput
 	}
 
@@ -49,10 +63,11 @@ func (h *UpdateHabitHandler) Handle(ctx context.Context, cmd UpdateHabitCommand)
 
 	habit.Name = cmd.Name
 	habit.Description = cmd.Description
-	habit.CarryOver = cmd.CarryOver
-	habit.TargetValue = cmd.TargetValue
+	habit.Frequency = cmd.Frequency
 	habit.SpecificDays = cmd.SpecificDays
 	habit.SpecificDates = cmd.SpecificDates
+	habit.CarryOver = cmd.CarryOver
+	habit.TargetValue = cmd.TargetValue
 
 	return h.habitRepo.Update(ctx, habit)
 }

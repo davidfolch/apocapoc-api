@@ -89,6 +89,7 @@ func TestHabitCRUDFlow(t *testing.T) {
 		reqBody := UpdateHabitRequest{
 			Name:        "Morning Exercise",
 			Description: "Updated description",
+			Frequency:   "DAILY",
 		}
 
 		rr := makeRequest(t, *ts.Router, "PUT", "/api/v1/habits/"+habitID, reqBody, token)

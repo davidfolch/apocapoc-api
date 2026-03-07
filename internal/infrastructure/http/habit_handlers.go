@@ -313,10 +313,11 @@ func (h *HabitHandlers) UpdateHabit(w http.ResponseWriter, r *http.Request) {
 		UserID:        userID,
 		Name:          req.Name,
 		Description:   req.Description,
-		CarryOver:     req.CarryOver,
-		TargetValue:   req.TargetValue,
+		Frequency:     req.Frequency,
 		SpecificDays:  req.SpecificDays,
 		SpecificDates: req.SpecificDates,
+		CarryOver:     req.CarryOver,
+		TargetValue:   req.TargetValue,
 	}
 
 	if err := h.updateHandler.Handle(r.Context(), cmd); err != nil {

@@ -27,7 +27,7 @@ func NewStatsHandlers(
 
 // GetHabitStats godoc
 // @Summary Get habit statistics
-// @Description Get statistics for a specific habit including streaks and completion rates
+// @Description Get statistics for a specific habit including streaks and completions
 // @Tags stats
 // @Produce json
 // @Security BearerAuth

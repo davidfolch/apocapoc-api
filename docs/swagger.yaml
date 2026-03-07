@@ -268,6 +268,8 @@ definitions:
         type: boolean
       description:
         type: string
+      frequency:
+        $ref: '#/definitions/value_objects.Frequency'
       name:
         type: string
       specific_dates:
@@ -1189,8 +1191,7 @@ paths:
       - system
   /stats/habits/{id}:
     get:
-      description: Get statistics for a specific habit including streaks and completion
-        rates
+      description: Get statistics for a specific habit including streaks and completions
       parameters:
       - description: Habit ID
         in: path

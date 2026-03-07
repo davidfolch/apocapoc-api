@@ -120,7 +120,8 @@ func TestHabitUpdateAffectsStats(t *testing.T) {
 
 	t.Run("Stats remain after updating habit name", func(t *testing.T) {
 		updateReq := UpdateHabitRequest{
-			Name: "Morning Running",
+			Name:      "Morning Running",
+			Frequency: "DAILY",
 		}
 		rr := makeRequest(t, *ts.Router, "PUT", "/api/v1/habits/"+habitID, updateReq, token)
 		if rr.Code != http.StatusOK {

@@ -20,12 +20,13 @@ type CreateHabitRequest struct {
 }
 
 type UpdateHabitRequest struct {
-	Name          string   `json:"name"`
-	Description   string   `json:"description"`
-	SpecificDays  []int    `json:"specific_days,omitempty"`
-	SpecificDates []int    `json:"specific_dates,omitempty"`
-	CarryOver     bool     `json:"carry_over"`
-	TargetValue   *float64 `json:"target_value,omitempty"`
+	Name          string                  `json:"name"`
+	Description   string                  `json:"description"`
+	Frequency     value_objects.Frequency `json:"frequency"`
+	SpecificDays  []int                   `json:"specific_days,omitempty"`
+	SpecificDates []int                   `json:"specific_dates,omitempty"`
+	CarryOver     bool                    `json:"carry_over"`
+	TargetValue   *float64                `json:"target_value,omitempty"`
 }
 
 type HabitResponse struct {
