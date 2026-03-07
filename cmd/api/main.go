@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"apocapoc-api/internal/application/commands"
@@ -155,11 +159,32 @@ func main() {
 	router := httpInfra.NewRouter(cfg.AppURL, habitHandlers, authHandlers, statsHandlers, healthHandlers, userHandlers, exportHandlers, syncHandlers, jwtService, translator)
 
 	addr := fmt.Sprintf("0.0.0.0:%s", cfg.Port)
-	logger.Info().Str("address", addr).Msg("Server starting")
-
-	if err := http.ListenAndServe(addr, router); err != nil {
-		logger.Fatal().Err(err).Msg("Server failed")
+	server := &http.Server{
+		Addr:    addr,
+		Handler: router,
 	}
+
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		logger.Info().Str("address", addr).Msg("Server starting")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal().Err(err).Msg("Server failed")
+		}
+	}()
+
+	<-shutdown
+	logger.Info().Msg("Shutting down gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Fatal().Err(err).Msg("Server forced to shutdown")
+	}
+
+	logger.Info().Msg("Server stopped")
 }
 
 func parseJWTExpiry(expiry string) (int, error) {
