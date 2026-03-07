@@ -124,12 +124,12 @@ type SyncHabitDTO struct {
 }
 
 type SyncHabitEntryDTO struct {
-	ID            string     `json:"id"`
-	HabitID       string     `json:"habit_id"`
-	ScheduledDate time.Time  `json:"scheduled_date"`
-	CompletedAt   time.Time  `json:"completed_at"`
-	Value         *float64   `json:"value,omitempty"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	ID            string    `json:"id"`
+	HabitID       string    `json:"habit_id"`
+	ScheduledDate time.Time `json:"scheduled_date"`
+	CompletedAt   time.Time `json:"completed_at"`
+	Value         *float64  `json:"value,omitempty"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 type HabitChangesDTO struct {

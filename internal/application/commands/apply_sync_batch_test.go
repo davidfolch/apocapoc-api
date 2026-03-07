@@ -13,9 +13,9 @@ import (
 )
 
 type mockHabitRepoForBatch struct {
-	habits       map[string]*entities.Habit
-	createFunc   func(ctx context.Context, habit *entities.Habit) error
-	updateFunc   func(ctx context.Context, habit *entities.Habit) error
+	habits         map[string]*entities.Habit
+	createFunc     func(ctx context.Context, habit *entities.Habit) error
+	updateFunc     func(ctx context.Context, habit *entities.Habit) error
 	softDeleteFunc func(ctx context.Context, id string) error
 }
 

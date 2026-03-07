@@ -13,9 +13,9 @@ import (
 )
 
 type SyncHandlers struct {
-	getSyncChangesHandler  *queries.GetSyncChangesHandler
-	applySyncBatchHandler  *commands.ApplySyncBatchHandler
-	translator             *i18n.Translator
+	getSyncChangesHandler *queries.GetSyncChangesHandler
+	applySyncBatchHandler *commands.ApplySyncBatchHandler
+	translator            *i18n.Translator
 }
 
 func NewSyncHandlers(
