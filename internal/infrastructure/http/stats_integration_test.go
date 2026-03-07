@@ -47,7 +47,7 @@ func TestHabitStatsFlow(t *testing.T) {
 
 	today := time.Now().UTC().Format("2006-01-02")
 
-	t.Run("Stats after marking habit once", func(t *testing.T) {
+	t.Run("Stats after marking habit today", func(t *testing.T) {
 		markReq := MarkHabitRequest{
 			ScheduledDate: today,
 		}
@@ -69,7 +69,7 @@ func TestHabitStatsFlow(t *testing.T) {
 			t.Errorf("Expected 1 total completion, got %d", stats.TotalCompletions)
 		}
 		if stats.CurrentStreak != 1 {
-			t.Errorf("Expected current streak of 1, got %d", stats.CurrentStreak)
+			t.Errorf("Expected current streak of 1 (today completed counts), got %d", stats.CurrentStreak)
 		}
 		if stats.LongestStreak != 1 {
 			t.Errorf("Expected longest streak of 1, got %d", stats.LongestStreak)

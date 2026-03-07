@@ -1978,9 +1978,6 @@ const docTemplate = `{
         "queries.HabitStatsDTO": {
             "type": "object",
             "properties": {
-                "completion_rate": {
-                    "type": "number"
-                },
                 "completions_this_month": {
                     "type": "integer"
                 },

@@ -384,8 +384,6 @@ definitions:
     type: object
   queries.HabitStatsDTO:
     properties:
-      completion_rate:
-        type: number
       completions_this_month:
         type: integer
       completions_this_week:
