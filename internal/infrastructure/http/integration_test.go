@@ -11,6 +11,7 @@ import (
 
 	"apocapoc-api/internal/application/commands"
 	"apocapoc-api/internal/application/queries"
+	"apocapoc-api/internal/domain/services"
 	"apocapoc-api/internal/i18n"
 	"apocapoc-api/internal/infrastructure/auth"
 	"apocapoc-api/internal/infrastructure/crypto"
@@ -43,14 +44,15 @@ func setupTestServer(t *testing.T) *TestServer {
 	refreshTokenRepo := sqlite.NewRefreshTokenRepository(db)
 	passwordResetTokenRepo := sqlite.NewPasswordResetTokenRepository(db)
 
-	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, nil, "", "open", false)
+	noOpEmail := &services.NoOpEmailService{}
+	registerHandler := commands.NewRegisterUserHandler(userRepo, passwordHasher, noOpEmail, "", "open", false)
 	loginHandler := queries.NewLoginUserHandler(userRepo, passwordHasher)
 	refreshTokenHandler := queries.NewRefreshTokenHandler(refreshTokenRepo, userRepo)
 	revokeTokenHandler := commands.NewRevokeTokenHandler(refreshTokenRepo)
 	revokeAllTokensHandler := commands.NewRevokeAllTokensHandler(refreshTokenRepo)
-	verifyEmailHandler := commands.NewVerifyEmailHandler(userRepo, nil, false)
-	resendVerificationEmailHandler := commands.NewResendVerificationEmailHandler(userRepo, nil, "")
-	requestPasswordResetHandler := commands.NewRequestPasswordResetHandler(userRepo, passwordResetTokenRepo, nil, "")
+	verifyEmailHandler := commands.NewVerifyEmailHandler(userRepo, noOpEmail, false)
+	resendVerificationEmailHandler := commands.NewResendVerificationEmailHandler(userRepo, noOpEmail, "")
+	requestPasswordResetHandler := commands.NewRequestPasswordResetHandler(userRepo, passwordResetTokenRepo, noOpEmail, "")
 	resetPasswordHandler := commands.NewResetPasswordHandler(userRepo, passwordResetTokenRepo, passwordHasher)
 	createHandler := commands.NewCreateHabitHandler(habitRepo)
 	getTodaysHandler := queries.NewGetTodaysHabitsHandler(habitRepo, entryRepo)

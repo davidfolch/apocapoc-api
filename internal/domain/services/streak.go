@@ -49,7 +49,8 @@ func buildEntryMap(entries []*entities.HabitEntry) map[string]*entities.HabitEnt
 }
 
 func allScheduledDates(habit *entities.Habit, now time.Time) []time.Time {
-	start := time.Date(habit.CreatedAt.Year(), habit.CreatedAt.Month(), habit.CreatedAt.Day(), 0, 0, 0, 0, time.UTC)
+	createdUTC := habit.CreatedAt.UTC()
+	start := time.Date(createdUTC.Year(), createdUTC.Month(), createdUTC.Day(), 0, 0, 0, 0, time.UTC)
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	freq := string(habit.Frequency)
 

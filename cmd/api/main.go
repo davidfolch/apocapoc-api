@@ -95,7 +95,7 @@ func main() {
 	jwtService := auth.NewJWTService(cfg.JWTSecret, jwtExpiryHours)
 	passwordHasher := crypto.NewBcryptHasher()
 
-	var emailService services.EmailService
+	var emailService services.EmailService = &services.NoOpEmailService{}
 	if cfg.SMTPHost != "" {
 		smtpPort, err := strconv.Atoi(cfg.SMTPPort)
 		if err != nil {

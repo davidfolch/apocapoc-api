@@ -2,6 +2,7 @@ package commands
 
 import (
 	"apocapoc-api/internal/domain/repositories"
+	"apocapoc-api/internal/domain/services"
 	"apocapoc-api/internal/shared/pagination"
 	"context"
 	"errors"
@@ -71,7 +72,7 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
+	handler := NewRegisterUserHandler(repo, hasher, &services.NoOpEmailService{}, "", "open", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -88,7 +89,7 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 	}
 
 	if result.EmailVerificationRequired {
-		t.Error("expected email verification to not be required when emailService is nil")
+		t.Error("expected email verification to not be required when email is disabled")
 	}
 
 	if createdUser == nil {
@@ -103,7 +104,7 @@ func TestRegisterUserHandler_Success(t *testing.T) {
 func TestRegisterUserHandler_InvalidEmail(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
+	handler := NewRegisterUserHandler(repo, hasher, &services.NoOpEmailService{}, "", "open", false)
 
 	tests := []struct {
 		name  string
@@ -135,7 +136,7 @@ func TestRegisterUserHandler_InvalidEmail(t *testing.T) {
 func TestRegisterUserHandler_InvalidPassword(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
+	handler := NewRegisterUserHandler(repo, hasher, &services.NoOpEmailService{}, "", "open", false)
 
 	tests := []struct {
 		name     string
@@ -174,7 +175,7 @@ func TestRegisterUserHandler_EmailAlreadyExists(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
+	handler := NewRegisterUserHandler(repo, hasher, &services.NoOpEmailService{}, "", "open", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -195,7 +196,7 @@ func TestRegisterUserHandler_PasswordHashingError(t *testing.T) {
 			return "", expectedErr
 		},
 	}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
+	handler := NewRegisterUserHandler(repo, hasher, &services.NoOpEmailService{}, "", "open", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -216,7 +217,7 @@ func TestRegisterUserHandler_RepositoryError(t *testing.T) {
 		},
 	}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
+	handler := NewRegisterUserHandler(repo, hasher, &services.NoOpEmailService{}, "", "open", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",
@@ -232,7 +233,7 @@ func TestRegisterUserHandler_RepositoryError(t *testing.T) {
 func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "open", false)
+	handler := NewRegisterUserHandler(repo, hasher, &services.NoOpEmailService{}, "", "open", false)
 
 	tests := []struct {
 		name    string
@@ -285,7 +286,7 @@ func TestRegisterUserHandler_EdgeCases(t *testing.T) {
 func TestRegisterUserHandler_ClosedRegistration(t *testing.T) {
 	repo := &mockUserRepo{}
 	hasher := &mockPasswordHasher{}
-	handler := NewRegisterUserHandler(repo, hasher, nil, "", "closed", false)
+	handler := NewRegisterUserHandler(repo, hasher, &services.NoOpEmailService{}, "", "closed", false)
 
 	cmd := RegisterUserCommand{
 		Email:    "test@example.com",

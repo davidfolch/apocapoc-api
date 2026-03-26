@@ -73,7 +73,7 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 	user := entities.NewUser(cmd.Email, hashedPassword)
 
 	emailVerificationRequired := false
-	if h.emailService != nil {
+	if h.emailService.IsEnabled() {
 		token, err := h.generateVerificationToken()
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate verification token: %w", err)

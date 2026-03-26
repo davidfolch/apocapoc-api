@@ -89,6 +89,10 @@ func (m *mockRequestResetEmailService) HealthCheck() error {
 	return nil
 }
 
+func (m *mockRequestResetEmailService) IsEnabled() bool {
+	return true
+}
+
 func TestRequestPasswordResetHandler_Success(t *testing.T) {
 	user := entities.NewUser("test@example.com", "hash")
 	user.ID = "user-123"

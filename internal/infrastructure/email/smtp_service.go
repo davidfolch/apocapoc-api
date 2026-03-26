@@ -107,6 +107,10 @@ func (s *SMTPService) GetConfig() SMTPConfig {
 	return s.config
 }
 
+func (s *SMTPService) IsEnabled() bool {
+	return true
+}
+
 func (s *SMTPService) HealthCheck() error {
 	dialer := mail.NewDialer(s.config.Host, s.config.Port, s.config.Username, s.config.Password)
 	dialer.TLSConfig = &tls.Config{
