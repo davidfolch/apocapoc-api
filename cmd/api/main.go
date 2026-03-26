@@ -20,6 +20,7 @@ import (
 	"apocapoc-api/internal/infrastructure/config"
 	"apocapoc-api/internal/infrastructure/crypto"
 	"apocapoc-api/internal/infrastructure/email"
+	"apocapoc-api/internal/domain/services"
 	httpInfra "apocapoc-api/internal/infrastructure/http"
 	"apocapoc-api/internal/infrastructure/logger"
 	"apocapoc-api/internal/infrastructure/persistence/sqlite"
@@ -94,7 +95,7 @@ func main() {
 	jwtService := auth.NewJWTService(cfg.JWTSecret, jwtExpiryHours)
 	passwordHasher := crypto.NewBcryptHasher()
 
-	var emailService *email.SMTPService
+	var emailService services.EmailService
 	if cfg.SMTPHost != "" {
 		smtpPort, err := strconv.Atoi(cfg.SMTPPort)
 		if err != nil {
