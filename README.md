@@ -139,7 +139,9 @@ API runs on `http://localhost:8080`
 
 ## API Documentation
 
-Access the interactive Swagger UI at `http://localhost:8080/api/v1/docs`
+**Live:** [apocapoc.app/api/v1/docs](https://apocapoc.app/api/v1/docs)
+
+**Local:** `http://localhost:8080/api/v1/docs`
 
 Includes endpoint reference, schemas, authentication examples, and live testing.
 

@@ -30,9 +30,6 @@ func NewRouter(appURL string, habitHandlers *HabitHandlers, authHandlers *AuthHa
 		AllowCredentials: true,
 	}))
 
-	r.Get("/docs", httpSwagger.Handler(
-		httpSwagger.URL("/api/v1/docs/doc.json"),
-	))
 	r.Get("/api/v1/docs", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/api/v1/docs/index.html", http.StatusMovedPermanently)
 	})
