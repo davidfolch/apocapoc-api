@@ -123,6 +123,47 @@ func TestHabitCRUDFlow(t *testing.T) {
 		}
 	})
 
+	t.Run("Create habit with missing type returns field-level error", func(t *testing.T) {
+		token := registerAndLogin(t, *ts.Router, "validationuser@example.com", "Password123!")
+
+		reqBody := map[string]any{"name": "No Type"}
+		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/habits", reqBody, token)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("Expected 400, got %d. Body: %s", rr.Code, rr.Body.String())
+		}
+
+		var resp ValidationErrorResponse
+		decodeResponse(t, rr, &resp)
+		if resp.Field != "type" {
+			t.Errorf("Expected field 'type', got %q. Body: %s", resp.Field, rr.Body.String())
+		}
+		if resp.Error == "" {
+			t.Errorf("Expected non-empty translated error message. Body: %s", rr.Body.String())
+		}
+	})
+
+	t.Run("Create weekly habit without specific_days returns field-level error", func(t *testing.T) {
+		token := registerAndLogin(t, *ts.Router, "weeklyuser@example.com", "Password123!")
+
+		reqBody := CreateHabitRequest{
+			Name:      "Cut nails",
+			Type:      "BOOLEAN",
+			Frequency: "WEEKLY",
+		}
+		rr := makeRequest(t, *ts.Router, "POST", "/api/v1/habits", reqBody, token)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("Expected 400, got %d. Body: %s", rr.Code, rr.Body.String())
+		}
+
+		var resp ValidationErrorResponse
+		decodeResponse(t, rr, &resp)
+		if resp.Field != "specific_days" {
+			t.Errorf("Expected field 'specific_days', got %q. Body: %s", resp.Field, rr.Body.String())
+		}
+	})
+
 	t.Run("Access other user's habit", func(t *testing.T) {
 		otherToken := registerAndLogin(t, *ts.Router, "otheruser@example.com", "Password123!")
 

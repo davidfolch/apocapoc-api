@@ -4,6 +4,8 @@ import (
 	"apocapoc-api/internal/domain/repositories"
 	"apocapoc-api/internal/shared/pagination"
 	"context"
+	stderrors "errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -110,8 +112,31 @@ func TestCreateHabitHandler_InvalidType(t *testing.T) {
 
 	_, err := handler.Handle(context.Background(), cmd)
 
-	if err != errors.ErrInvalidInput {
-		t.Errorf("Expected ErrInvalidInput, got %v", err)
+	if !stderrors.Is(err, errors.ErrInvalidInput) {
+		t.Fatalf("Expected ErrInvalidInput wrapper, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "type: type_invalid") {
+		t.Errorf("Expected 'type: type_invalid' in error, got %q", err.Error())
+	}
+}
+
+func TestCreateHabitHandler_EmptyType(t *testing.T) {
+	mock := &mockHabitRepo{}
+	handler := NewCreateHabitHandler(mock)
+
+	cmd := CreateHabitCommand{
+		UserID:    "user-123",
+		Name:      "Exercise",
+		Frequency: "DAILY",
+	}
+
+	_, err := handler.Handle(context.Background(), cmd)
+
+	if !stderrors.Is(err, errors.ErrInvalidInput) {
+		t.Fatalf("Expected ErrInvalidInput wrapper, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "type: type_invalid") {
+		t.Errorf("Expected 'type: type_invalid' in error, got %q", err.Error())
 	}
 }
 
@@ -128,8 +153,11 @@ func TestCreateHabitHandler_InvalidFrequency(t *testing.T) {
 
 	_, err := handler.Handle(context.Background(), cmd)
 
-	if err != errors.ErrInvalidInput {
-		t.Errorf("Expected ErrInvalidInput, got %v", err)
+	if !stderrors.Is(err, errors.ErrInvalidInput) {
+		t.Fatalf("Expected ErrInvalidInput wrapper, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "frequency: frequency_invalid") {
+		t.Errorf("Expected 'frequency: frequency_invalid' in error, got %q", err.Error())
 	}
 }
 
@@ -147,8 +175,11 @@ func TestCreateHabitHandler_WeeklyWithoutSpecificDays(t *testing.T) {
 
 	_, err := handler.Handle(context.Background(), cmd)
 
-	if err != errors.ErrInvalidInput {
-		t.Errorf("Expected ErrInvalidInput, got %v", err)
+	if !stderrors.Is(err, errors.ErrInvalidInput) {
+		t.Fatalf("Expected ErrInvalidInput wrapper, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "specific_days: specific_days_required") {
+		t.Errorf("Expected 'specific_days: specific_days_required' in error, got %q", err.Error())
 	}
 }
 
@@ -166,8 +197,11 @@ func TestCreateHabitHandler_MonthlyWithoutSpecificDates(t *testing.T) {
 
 	_, err := handler.Handle(context.Background(), cmd)
 
-	if err != errors.ErrInvalidInput {
-		t.Errorf("Expected ErrInvalidInput, got %v", err)
+	if !stderrors.Is(err, errors.ErrInvalidInput) {
+		t.Fatalf("Expected ErrInvalidInput wrapper, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "specific_dates: specific_dates_required") {
+		t.Errorf("Expected 'specific_dates: specific_dates_required' in error, got %q", err.Error())
 	}
 }
 

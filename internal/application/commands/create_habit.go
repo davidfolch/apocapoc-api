@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"fmt"
 
 	"apocapoc-api/internal/domain/entities"
 	"apocapoc-api/internal/domain/repositories"
@@ -32,19 +33,19 @@ func NewCreateHabitHandler(habitRepo repositories.HabitRepository) *CreateHabitH
 
 func (h *CreateHabitHandler) Handle(ctx context.Context, cmd CreateHabitCommand) (string, error) {
 	if !cmd.Type.IsValid() {
-		return "", errors.ErrInvalidInput
+		return "", fmt.Errorf("%w: type: type_invalid", errors.ErrInvalidInput)
 	}
 
 	if !cmd.Frequency.IsValid() {
-		return "", errors.ErrInvalidInput
+		return "", fmt.Errorf("%w: frequency: frequency_invalid", errors.ErrInvalidInput)
 	}
 
 	if cmd.Frequency == value_objects.FrequencyWeekly && len(cmd.SpecificDays) == 0 {
-		return "", errors.ErrInvalidInput
+		return "", fmt.Errorf("%w: specific_days: specific_days_required", errors.ErrInvalidInput)
 	}
 
 	if cmd.Frequency == value_objects.FrequencyMonthly && len(cmd.SpecificDates) == 0 {
-		return "", errors.ErrInvalidInput
+		return "", fmt.Errorf("%w: specific_dates: specific_dates_required", errors.ErrInvalidInput)
 	}
 
 	habit := entities.NewHabit(cmd.UserID, cmd.Name, cmd.Type, cmd.Frequency, cmd.CarryOver, cmd.IsNegative)

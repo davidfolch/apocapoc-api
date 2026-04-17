@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	stderrors "errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -97,8 +98,8 @@ func (h *HabitHandlers) CreateHabit(w http.ResponseWriter, r *http.Request) {
 
 	habitID, err := h.createHandler.Handle(r.Context(), cmd)
 	if err != nil {
-		if err == errors.ErrInvalidInput {
-			respondError(w, http.StatusBadRequest, err.Error())
+		if stderrors.Is(err, errors.ErrInvalidInput) {
+			respondValidationErrorI18n(w, r, h.translator, err)
 			return
 		}
 		respondErrorI18n(w, r, h.translator, http.StatusInternalServerError, "failed_create_habit")
